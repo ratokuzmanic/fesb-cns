@@ -6,43 +6,35 @@ const app = express();
 const jsonParser = bodyParser.json()
 const urlEncodedParser = bodyParser.urlencoded({ extended: false })
 
-const ECB_COOKIE = 'aaaaaaaa';
+const cookie = 'aaaaaaaa';
 
-function encrypt( 
-    mode,
-    plaintext, 
-    iv=Buffer.alloc(0), 
-    padding=true,
-    inputEncoding='utf8',
-    outputEncoding='hex' 
-) {
-    const cipher = crypto.createCipheriv(mode, Buffer.from([0x81, 0x5d, 0x98, 0xe9, 0xa4, 0x89, 0x8a, 0x9a, 0x81, 0x5d, 0x98, 0xe9, 0xa4, 0x89, 0x8a, 0x9a, 0x81, 0x5d, 0x98, 0xe9, 0xa4, 0x89, 0x8a, 0x9a, 0x81, 0x5d, 0x98, 0xe9, 0xa4, 0x89, 0x8a, 0x9a]), iv)
-    cipher.setAutoPadding(padding)
-    let ciphertext = cipher.update(plaintext, inputEncoding, outputEncoding)
-    ciphertext += cipher.final(outputEncoding)
-
-    return { 
-        iv: iv.toString(outputEncoding), 
-        ciphertext 
-    }
+const encryptConfig = {
+    mode: 'aes-256-ecb',
+    key: 'f273d50e49b1bcff66b5f113da6bd734f173d50e59b1bcff66b5f213da6bd733'
 }
 
-function createCiphertext(plaintext) {
-    return encrypt('aes-256-ecb', plaintext.concat(ECB_COOKIE));
+encrypt = plaintext => {
+    const padding = true;
+    const inputEncoding = 'utf8';
+    const outputEncoding = 'hex';
+
+    const cipher = crypto.createCipheriv(encryptConfig.mode, Buffer.from(encryptConfig.key, 'hex'), Buffer.alloc(0));
+    cipher.setAutoPadding(padding);
+    let ciphertext = cipher.update(plaintext, inputEncoding, outputEncoding);
+    ciphertext += cipher.final(outputEncoding);
+
+    return ciphertext;
 }
 
-app.post('/ecb', jsonParser, function(request, response){
+processRequest = (request, response) => {
     response.writeHead(200, {'Content-Type': 'text/html'});
-    const { plaintext } = request.body
-    const { ciphertext } = createCiphertext(plaintext);
-    response.end(ciphertext);
-});
 
-app.post('/dev', urlEncodedParser, function(request, response){
-    response.writeHead(200, {'Content-Type': 'text/html'});
     const { plaintext } = request.body
-    const { ciphertext } = createCiphertext(plaintext);
-    response.end(ciphertext);
-});
+    const ciphertext = encrypt(plaintext.concat(cookie));
 
+    response.end(ciphertext);
+}
+
+app.post('/ecb', jsonParser, (request, response) => processRequest(request, response));
+app.post('/dev', urlEncodedParser, (request, response) => processRequest(request, response));
 app.listen(80);
