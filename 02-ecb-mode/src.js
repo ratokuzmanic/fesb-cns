@@ -1,40 +1,55 @@
-const crypto = require('crypto');
-const express = require('express');
-const bodyParser = require('body-parser');
+const http = require('http');
+const querystring = require('querystring');
 
-const app = express();
-const jsonParser = bodyParser.json()
-const urlEncodedParser = bodyParser.urlencoded({ extended: false })
-
-const cookie = 'aaaaaaaa';
-
-const encryptConfig = {
-    mode: 'aes-256-ecb',
-    key: 'f273d50e49b1bcff66b5f113da6bd734f173d50e59b1bcff66b5f213da6bd733'
+function nextChar(c) {
+    return String.fromCharCode(c.charCodeAt(0) + 1);
 }
 
-encrypt = plaintext => {
-    const padding = true;
-    const inputEncoding = 'utf8';
-    const outputEncoding = 'hex';
-
-    const cipher = crypto.createCipheriv(encryptConfig.mode, Buffer.from(encryptConfig.key, 'hex'), Buffer.alloc(0));
-    cipher.setAutoPadding(padding);
-    let ciphertext = cipher.update(plaintext, inputEncoding, outputEncoding);
-    ciphertext += cipher.final(outputEncoding);
-
-    return ciphertext;
+function takeFirstHalfOfString(string) {
+    return string.slice(0, string.length / 2);
 }
 
-processRequest = (request, response) => {
-    response.writeHead(200, {'Content-Type': 'text/html'});
+const requestOptions = {
+    urlEncoded: {
+        host: 'localhost',
+        port: '80',
+        path: '/',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    },
+    json: {
+        host: 'localhost',
+        port: '80',
+        path: '/ecb',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }    
+};
 
-    const { plaintext } = request.body
-    const ciphertext = encrypt(plaintext.concat(cookie));
+function sendPostRequest(plaintext, options) {
+    const data = 
+        options === requestOptions.urlEncoded
+        ? querystring.stringify({ 'plaintext' : plaintext })
+        : JSON.stringify({ plaintext: plaintext });
 
-    response.end(ciphertext);
+    const request = http.request(options, response => {
+        response.setEncoding('utf8');
+        response.on('data', chunk => {
+            const { ciphertext } = JSON.parse(chunk);
+            console.log(ciphertext);
+        });
+    });
+
+    request.write(data);
+    request.end();
 }
 
-app.post('/ecb', jsonParser, (request, response) => processRequest(request, response));
-app.post('/dev', urlEncodedParser, (request, response) => processRequest(request, response));
-app.listen(80);
+function constructLeftPaddingForCookie(numberOfAsOnLeft, lastLetter) {
+    return Array(numberOfAsOnLeft).join("a") + lastLetter;
+}
+
+sendPostRequest('test', requestOptions.urlEncoded);
