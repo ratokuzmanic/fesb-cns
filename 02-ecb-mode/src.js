@@ -1,5 +1,12 @@
-const http   = require('http');
 const crypto = require('crypto');
+const express = require('express');
+var bodyParser = require('body-parser');
+
+let app = express();
+
+var jsonParser = bodyParser.json()
+
+var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
 const ECB_COOKIE = 'aaaaaaaa';
 
@@ -22,15 +29,19 @@ function encrypt(
     }
 }
 
+app.post('/', jsonParser, function(req, res){
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    const { plaintext } = req.body
+    console.log(plaintext);
+    res.end(plaintext);
+});
 
-http.createServer(function (req, res) {
-    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
+app.post('/dev', urlencodedParser, function(req, res){
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    const { plaintext } = req.body
+    console.log(plaintext);
+    res.end(plaintext);
+});
 
-    const plaintext = req.url.slice(1, req.url.length)
-    console.log(plaintext)
-
-    const { ciphertext } = encrypt('aes-256-ecb', plaintext.concat(ECB_COOKIE));
-    
-    console.log(ciphertext);
-    res.end(ciphertext);
-}).listen(8080);
+const port = 80;
+app.listen(port);
