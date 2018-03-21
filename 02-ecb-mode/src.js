@@ -1,12 +1,10 @@
 const crypto = require('crypto');
 const express = require('express');
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 
-let app = express();
-
-var jsonParser = bodyParser.json()
-
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
+const app = express();
+const jsonParser = bodyParser.json()
+const urlEncodedParser = bodyParser.urlencoded({ extended: false })
 
 const ECB_COOKIE = 'aaaaaaaa';
 
@@ -29,19 +27,22 @@ function encrypt(
     }
 }
 
-app.post('/', jsonParser, function(req, res){
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    const { plaintext } = req.body
-    console.log(plaintext);
-    res.end(plaintext);
+function createCiphertext(plaintext) {
+    return encrypt('aes-256-ecb', plaintext.concat(ECB_COOKIE));
+}
+
+app.post('/ecb', jsonParser, function(request, response){
+    response.writeHead(200, {'Content-Type': 'text/html'});
+    const { plaintext } = request.body
+    const { ciphertext } = createCiphertext(plaintext);
+    response.end(ciphertext);
 });
 
-app.post('/dev', urlencodedParser, function(req, res){
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    const { plaintext } = req.body
-    console.log(plaintext);
-    res.end(plaintext);
+app.post('/dev', urlEncodedParser, function(request, response){
+    response.writeHead(200, {'Content-Type': 'text/html'});
+    const { plaintext } = request.body
+    const { ciphertext } = createCiphertext(plaintext);
+    response.end(ciphertext);
 });
 
-const port = 80;
-app.listen(port);
+app.listen(80);
