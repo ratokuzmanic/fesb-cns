@@ -26,34 +26,27 @@ sendPostRequest = (plaintext, config) =>
 
         request.write(data);
         request.end();
-    });    
-
-//sendPostRequest(test, requestConfig.urlEncoded);
-
-//let letter = "!";
-//for(let i = 0; i < 93; i++) {
-//    letter = helpers.getNextCharacter(letter)
-//    console.log(letter);
-//}
+    });
 
 (async () => {
     let cookie = '';
 
-    let letter='';
-    let paddingForCookie = 'a'.repeat(15 - cookie.length);
-    let plaintext = `${paddingForCookie}${cookie}${letter}`;
-    let ciphertext = await sendPostRequest(plaintext, requestConfig.urlEncoded);
-    let goal = helpers.takeFirstCipherblock(ciphertext);
+    for(let j = 0; j < 16; j++) {
+        let initialPadding = 'a'.repeat(15 - cookie.length);  
+        let goalCiphertext = await sendPostRequest(initialPadding, requestConfig.urlEncoded);
+        let goal = helpers.takeFirstCipherblock(goalCiphertext);
 
-    letter = "!";
-    for(let i = 0; i < 93; i++) {
-        let padding = 'a'.repeat(15 - cookie.length);
-        let plaintext = `${padding}${cookie}${letter}`;
-        let ciphertext = await sendPostRequest(plaintext, requestConfig.urlEncoded);
-        if(helpers.takeFirstCipherblock(ciphertext) == goal) {
-            cookie += letter;
-            break;
+        let letter = "!";
+        for(let i = 0; i < 93; i++) {
+            let padding = 'a'.repeat(15 - cookie.length);
+            let plaintext = `${padding}${cookie}${letter}`;
+            let ciphertext = await sendPostRequest(plaintext, requestConfig.urlEncoded);
+            let firstBlock = helpers.takeFirstCipherblock(ciphertext);
+            if(firstBlock === goal) {
+                cookie += letter;
+                break;
+            }
+            letter = helpers.getNextCharacter(letter);
         }
-        letter = helpers.getNextCharacter(letter);
-    }   
+    }
 })();
