@@ -37,9 +37,23 @@ sendPostRequest = (plaintext, config) =>
 //}
 
 (async () => {
-    let paddingForCookie = helpers.addLeftPadding('a', 15, 'r');
-    let goal = await sendPostRequest(paddingForCookie, requestConfig.urlEncoded);
-    console.log(helpers.takeFirstCipherblock(goal));
-    console.log(goal);
-   
+    let cookie = '';
+
+    let letter='';
+    let paddingForCookie = 'a'.repeat(15 - cookie.length);
+    let plaintext = `${paddingForCookie}${cookie}${letter}`;
+    let ciphertext = await sendPostRequest(plaintext, requestConfig.urlEncoded);
+    let goal = helpers.takeFirstCipherblock(ciphertext);
+
+    letter = "!";
+    for(let i = 0; i < 93; i++) {
+        let padding = 'a'.repeat(15 - cookie.length);
+        let plaintext = `${padding}${cookie}${letter}`;
+        let ciphertext = await sendPostRequest(plaintext, requestConfig.urlEncoded);
+        if(helpers.takeFirstCipherblock(ciphertext) == goal) {
+            cookie += letter;
+            break;
+        }
+        letter = helpers.getNextCharacter(letter);
+    }   
 })();
