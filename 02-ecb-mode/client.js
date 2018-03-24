@@ -2,9 +2,14 @@ const http = require('http');
 const querystring = require('querystring');
 const { requestConfig } = require('./configs');
 const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
-const { takeFirstBlockFromCipherText, getNextCharacter } = require('./helpers');
 
 const REQUEST_CONFIG = requestConfig.json;
+
+takeFirstBlockFromCipherText = ciphertext =>    
+    ciphertext.slice(0, 32);
+
+getNextCharacter = character => 
+    String.fromCharCode(character.charCodeAt(0) + 1);
 
 sendPostRequest = plaintext =>
     new Promise((resolve, reject) => {
