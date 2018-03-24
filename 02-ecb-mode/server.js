@@ -6,7 +6,7 @@ const app = express();
 const jsonParser = bodyParser.json()
 const urlEncodedParser = bodyParser.urlencoded({ extended: false })
 
-const cookie = 'aaaaaaaa';
+const cookie = 'rxuz2ylq3s1p4uoq';
 
 const encryptConfig = {
     mode: 'aes-256-ecb',
