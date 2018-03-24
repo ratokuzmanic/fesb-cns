@@ -1,17 +1,18 @@
 const http = require('http');
 const querystring = require('querystring');
-const helpers = require('./helpers');
-const { prettyLogHex, prettyLogError } = require('./logger');
 const { requestConfig } = require('./configs');
+const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
+const { takeFirstBlockFromCipherText, getNextCharacter } = require('./helpers');
 
-sendPostRequest = (plaintext, config) =>
+const REQUEST_CONFIG = requestConfig.json;
+
+sendPostRequest = plaintext =>
     new Promise((resolve, reject) => {
-        const data = 
-        config === requestConfig.urlEncoded
-        ? querystring.stringify({ 'plaintext' : plaintext })
-        : JSON.stringify({ plaintext: plaintext });
+        const data = REQUEST_CONFIG === requestConfig.urlEncoded
+            ? querystring.stringify({ 'plaintext' : plaintext })
+            : JSON.stringify({ plaintext: plaintext });
 
-        const request = http.request(config, response => {
+        const request = http.request(REQUEST_CONFIG, response => {
             response.setEncoding('utf8');
             response.on('data', data => {
                 const { ciphertext } = JSON.parse(data);
@@ -19,7 +20,7 @@ sendPostRequest = (plaintext, config) =>
                 resolve(ciphertext);
             });
             response.on('error', error => {
-                prettyLogError('Error on POST promise', error);
+                prettyLogError('Error on POST request', error);
                 reject();
             });
         });
@@ -31,22 +32,26 @@ sendPostRequest = (plaintext, config) =>
 (async () => {
     let cookie = '';
 
-    for(let j = 0; j < 16; j++) {
+    for(let cookieLetters = 0; cookieLetters < 16; cookieLetters++) {
         let initialPadding = 'a'.repeat(15 - cookie.length);  
-        let goalCiphertext = await sendPostRequest(initialPadding, requestConfig.urlEncoded);
-        let goal = helpers.takeFirstCipherblock(goalCiphertext);
+        let goalCiphertext = await sendPostRequest(initialPadding);
+        let goalBlock = takeFirstBlockFromCipherText(goalCiphertext);
 
-        let letter = "!";
-        for(let i = 0; i < 93; i++) {
+        let character = "!";
+        for(let possibleCharacters = 0; possibleCharacters < 93; possibleCharacters++) {
             let padding = 'a'.repeat(15 - cookie.length);
-            let plaintext = `${padding}${cookie}${letter}`;
-            let ciphertext = await sendPostRequest(plaintext, requestConfig.urlEncoded);
-            let firstBlock = helpers.takeFirstCipherblock(ciphertext);
-            if(firstBlock === goal) {
-                cookie += letter;
+            let plaintext = `${padding}${cookie}${character}`;
+
+            let ciphertext = await sendPostRequest(plaintext);
+            let firstBlock = takeFirstBlockFromCipherText(ciphertext);
+
+            if(firstBlock === goalBlock) {
+                cookie += character;
                 break;
             }
-            letter = helpers.getNextCharacter(letter);
+            character = getNextCharacter(character);
         }
     }
+
+    prettyLogSuccess('Cookie discovered', `The seeked cookie is "${cookie}"`);
 })();

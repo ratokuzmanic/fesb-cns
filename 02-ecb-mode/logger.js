@@ -21,7 +21,13 @@ logError = (title, error) => {
     console.log(`Details: ${error}`);
 }
 
+logSuccess = (title, details) => {
+    console.log(`\n${chalk.black.bgGreen(wrapStringWithWhitespace(title, 8))}`);
+    console.log(`Details: ${details}`);
+}
+
 module.exports = {
     prettyLogHex: logHex,
-    prettyLogError: logError
+    prettyLogError: logError,
+    prettyLogSuccess: logSuccess
 }
