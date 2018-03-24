@@ -19,11 +19,13 @@ sendPostRequest = plaintext =>
 
         const request = http.request(REQUEST_CONFIG, response => {
             response.setEncoding('utf8');
+
             response.on('data', data => {
                 const { ciphertext } = JSON.parse(data);
                 prettyLogHex(`Response for '${plaintext}'`, ciphertext);
                 resolve(ciphertext);
             });
+            
             response.on('error', error => {
                 prettyLogError('Error on POST request', error);
                 reject();
