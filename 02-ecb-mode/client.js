@@ -1,5 +1,6 @@
 const http = require('http');
 const querystring = require('querystring');
+const helpers = require('./helpers');
 
 function nextChar(c) {
     return String.fromCharCode(c.charCodeAt(0) + 1);
@@ -9,7 +10,7 @@ function takeFirstHalfOfString(string) {
     return string.slice(0, string.length / 2);
 }
 
-const requestOptions = {
+const requestConfigs = {
     urlEncoded: {
         host: 'localhost',
         port: '80',
@@ -30,17 +31,17 @@ const requestOptions = {
     }    
 };
 
-function sendPostRequest(plaintext, options) {
+function sendPostRequest(plaintext, config) {
     const data = 
-        options === requestOptions.urlEncoded
+        config === requestConfigs.urlEncoded
         ? querystring.stringify({ 'plaintext' : plaintext })
         : JSON.stringify({ plaintext: plaintext });
 
-    const request = http.request(options, response => {
+    const request = http.request(config, response => {
         response.setEncoding('utf8');
         response.on('data', chunk => {
             const { ciphertext } = JSON.parse(chunk);
-            console.log(ciphertext);
+            helpers.prettyLogHex(ciphertext);
         });
     });
 
@@ -52,4 +53,4 @@ function constructLeftPaddingForCookie(numberOfAsOnLeft, lastLetter) {
     return Array(numberOfAsOnLeft).join("a") + lastLetter;
 }
 
-sendPostRequest('test', requestOptions.urlEncoded);
+sendPostRequest('test', requestConfigs.urlEncoded);

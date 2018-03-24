@@ -29,7 +29,7 @@ encrypt = plaintext => {
 processRequest = (request, response) => {
     response.writeHead(200, { 'Content-Type': 'application/json' });
 
-    const { plaintext } = request.body
+    const { plaintext } = request.body;
     const ciphertext = encrypt(plaintext.concat(cookie));
 
     response.end(JSON.stringify({ ciphertext: ciphertext }));
