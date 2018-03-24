@@ -1,7 +1,7 @@
 const http = require('http');
 const querystring = require('querystring');
 const helpers = require('./helpers');
-const { prettyLogHex } = require('./logger');
+const { prettyLogHex, prettyLogError } = require('./logger');
 const { requestConfig } = require('./configs');
 
 sendPostRequest = (plaintext, config) =>
@@ -19,7 +19,7 @@ sendPostRequest = (plaintext, config) =>
                 resolve(ciphertext);
             });
             response.on('error', error => {
-                console.log(`Error on POST promise: ${error}`);
+                prettyLogError('Error on POST promise', error);
                 reject();
             });
         });
@@ -37,11 +37,9 @@ sendPostRequest = (plaintext, config) =>
 //}
 
 (async () => {
-    let letter = "!";
-    for(let i = 0; i < 1; i++) {
-        letter = helpers.getNextCharacter(letter);
-        let plaintext = helpers.addLeftPadding('a', 15, letter);
-        let test = await sendPostRequest(plaintext, requestConfig.urlEncoded);
-        console.log(test);
-    }    
+    let paddingForCookie = helpers.addLeftPadding('a', 15, 'r');
+    let goal = await sendPostRequest(paddingForCookie, requestConfig.urlEncoded);
+    console.log(helpers.takeFirstCipherblock(goal));
+    console.log(goal);
+   
 })();

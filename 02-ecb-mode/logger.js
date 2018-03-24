@@ -1,5 +1,8 @@
 const chalk = require('chalk');
 
+wrapStringWithWhitespace = (string, numberOfWhitespaces) => 
+    `${' '.repeat(numberOfWhitespaces)}${string}${' '.repeat(numberOfWhitespaces)}`;
+    
 logHex = (title, string) => {
     const stringWithSeparators = string
         .replace(/(.{2})/g,"$1:")
@@ -13,6 +16,12 @@ logHex = (title, string) => {
     console.log(`Length of hex string is ${chalk.green(`${string.length} characters`)} equal to ${chalk.green(`${bitCount} bits`)} and ${chalk.green(`${byteCount} bytes`)}\n`);    
 }
 
+logError = (title, error) => {
+    console.log(`\n${chalk.white.bgRed(wrapStringWithWhitespace(title, 8))}`);
+    console.log(`Details: ${error}`);
+}
+
 module.exports = {
-    prettyLogHex: logHex
+    prettyLogHex: logHex,
+    prettyLogError: logError
 }
