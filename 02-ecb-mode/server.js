@@ -17,8 +17,7 @@ const pbkdf2Config = {
 }
 const challengeEncryptConfig = {
     mode: 'aes-256-cbc',
-    iv: 'f173d50e49b1bcff66b5f113da6bd733',
-    key: 'f273d30e49b2bcfff6b5f113da6bd734f173d50e59b1bcff66b5f213da6bd733'
+    iv: 'f173d50e49b1bcff66b5f113da6bd733'
 }
 const plaintextEncryptConfig = {
     mode: 'aes-256-ecb',
@@ -47,7 +46,7 @@ app.get('/', (request, response) => {
     response.writeHead(200, { 'Content-Type': 'application/json' });
 
     crypto.pbkdf2(cookie, pbkdf2Config.salt, pbkdf2Config.iterations, pbkdf2Config.size, pbkdf2Config.hash, (err, key) => {
-        const challenge = encrypt(challengeEncryptConfig.mode, joke, challengeEncryptConfig.key, challengeEncryptConfig.iv);
+        const challenge = encrypt(challengeEncryptConfig.mode, joke, key, challengeEncryptConfig.iv);
         response.end(JSON.stringify(challenge));
     });
 });

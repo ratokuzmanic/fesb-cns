@@ -1,9 +1,11 @@
 const http = require('http');
 const querystring = require('querystring');
-const { requestConfig } = require('./configs');
+const requestConfig = require('./configs');
 const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
+const { getDecryptedJoke } = require('./decrypt');
 
-const REQUEST_CONFIG = requestConfig.json;
+const GET_REQUEST_CONFIG = requestConfig.getRequest;
+const POST_REQUEST_CONFIG = requestConfig.postRequest.json;
 
 takeFirstBlockFromCipherText = ciphertext =>    
     ciphertext.slice(0, 32);
@@ -11,13 +13,23 @@ takeFirstBlockFromCipherText = ciphertext =>
 getNextCharacter = character => 
     String.fromCharCode(character.charCodeAt(0) + 1);
 
+getChallenge = () =>
+    new Promise((resolve, reject) => {
+        const request = http.request(GET_REQUEST_CONFIG, response => {
+            let data = '';
+            response.on('data', chunk => data += chunk);    
+            response.on('end', () => resolve(JSON.parse(data)));
+        }); 
+        request.end();       
+    });
+
 sendPostRequest = plaintext =>
     new Promise((resolve, reject) => {
-        const data = REQUEST_CONFIG === requestConfig.urlEncoded
+        const data = POST_REQUEST_CONFIG ===  requestConfig.postRequest.urlEncoded
             ? querystring.stringify({ 'plaintext' : plaintext })
             : JSON.stringify({ plaintext: plaintext });
 
-        const request = http.request(REQUEST_CONFIG, response => {
+        const request = http.request(POST_REQUEST_CONFIG, response => {
             response.setEncoding('utf8');
 
             response.on('data', data => {
@@ -61,4 +73,8 @@ sendPostRequest = plaintext =>
     }
 
     prettyLogSuccess('Cookie discovered', `The seeked cookie is "${cookie}"`);
+
+    getChallenge().then(challenge => 
+        getDecryptedJoke(cookie, challenge).then(plaintext => console.log(plaintext))
+    );
 })();

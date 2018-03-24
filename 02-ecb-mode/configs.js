@@ -1,26 +1,37 @@
-const commonRequest = {
+const common = {
     host: 'localhost',
-    port: '80',
-    method: 'POST'
-}
+    port: '80'
+};
 
-const request = {
+const getRequest = {
+    ...common,
+    path: '/',
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json'
+    }
+};
+
+const postRequest = {
     urlEncoded: {
+        ...common,
         path: '/',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        ...commonRequest
+        }
     },
     json: {
+        ...common,
         path: '/ecb',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        },
-        ...commonRequest
+        }        
     }    
 };
 
 module.exports = {
-    requestConfig: request
+    getRequest: getRequest,
+    postRequest: postRequest
 }
