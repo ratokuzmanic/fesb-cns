@@ -1,6 +1,7 @@
 const http = require('http');
 const querystring = require('querystring');
 const helpers = require('./helpers');
+const { requestConfig } = require('./configs');
 
 function nextChar(c) {
     return String.fromCharCode(c.charCodeAt(0) + 1);
@@ -10,30 +11,9 @@ function takeFirstHalfOfString(string) {
     return string.slice(0, string.length / 2);
 }
 
-const requestConfigs = {
-    urlEncoded: {
-        host: 'localhost',
-        port: '80',
-        path: '/',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    },
-    json: {
-        host: 'localhost',
-        port: '80',
-        path: '/ecb',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    }    
-};
-
 function sendPostRequest(plaintext, config) {
     const data = 
-        config === requestConfigs.urlEncoded
+        config === requestConfig.urlEncoded
         ? querystring.stringify({ 'plaintext' : plaintext })
         : JSON.stringify({ plaintext: plaintext });
 
@@ -53,4 +33,4 @@ function constructLeftPaddingForCookie(numberOfAsOnLeft, lastLetter) {
     return Array(numberOfAsOnLeft).join("a") + lastLetter;
 }
 
-sendPostRequest('test', requestConfigs.urlEncoded);
+sendPostRequest('test', requestConfig.urlEncoded);
