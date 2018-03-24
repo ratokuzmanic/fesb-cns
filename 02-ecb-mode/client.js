@@ -1,6 +1,7 @@
 const http = require('http');
 const querystring = require('querystring');
 const helpers = require('./helpers');
+const { prettyLogHex } = require('./logger');
 const { requestConfig } = require('./configs');
 
 sendPostRequest = (plaintext, config) =>
@@ -14,7 +15,7 @@ sendPostRequest = (plaintext, config) =>
             response.setEncoding('utf8');
             response.on('data', data => {
                 const { ciphertext } = JSON.parse(data);
-                helpers.prettyLogHex(`Response for '${plaintext}'`, ciphertext);
+                prettyLogHex(`Response for '${plaintext}'`, ciphertext);
                 resolve(ciphertext);
             });
             response.on('error', error => {
@@ -36,6 +37,11 @@ sendPostRequest = (plaintext, config) =>
 //}
 
 (async () => {
-    let test = await sendPostRequest('test', requestConfig.urlEncoded);
-    console.log(test);
+    let letter = "!";
+    for(let i = 0; i < 1; i++) {
+        letter = helpers.getNextCharacter(letter);
+        let plaintext = helpers.addLeftPadding('a', 15, letter);
+        let test = await sendPostRequest(plaintext, requestConfig.urlEncoded);
+        console.log(test);
+    }    
 })();
