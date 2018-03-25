@@ -4,7 +4,6 @@ const { request: { getRequest, postRequest }, app } = require('./configs');
 const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
 const { getDecryptedJoke } = require('./decrypt');
 
-const GET_REQUEST_CONFIG = getRequest;
 const POST_REQUEST_CONFIG = postRequest.urlEncoded;
 
 takeFirstBlockFromCiphertext = ciphertext =>    
@@ -15,7 +14,7 @@ getNextCharacter = character =>
 
 getChallenge = () =>
     new Promise((resolve, reject) => {
-        const request = http.request(GET_REQUEST_CONFIG, response => {
+        const request = http.request(getRequest, response => {
             let data = '';
             response.on('data', chunk => data += chunk);    
             response.on('end', () => resolve(JSON.parse(data)));
@@ -25,7 +24,8 @@ getChallenge = () =>
 
 getCiphertext = plaintext =>
     new Promise((resolve, reject) => {
-        const data = POST_REQUEST_CONFIG === postRequest.urlEncoded
+        const data = 
+            POST_REQUEST_CONFIG === postRequest.urlEncoded
             ? querystring.stringify({ plaintext })
             : JSON.stringify({ plaintext });
 
@@ -52,13 +52,13 @@ getCiphertext = plaintext =>
     let cookie = '';
 
     for(let cookieCharacterCount = 0; cookieCharacterCount < app.numberOfCookieCharacters; cookieCharacterCount++) {
-        let initialPadding = 'a'.repeat(15 - cookie.length);  
+        let initialPadding = 'a'.repeat((app.numberOfCookieCharacters - 1) - cookie.length);  
         let goalCiphertext = await getCiphertext(initialPadding);
         let goalBlock = takeFirstBlockFromCiphertext(goalCiphertext);
 
         let character = app.firstCharacterInSpace;
         for(let characterCount = 0; characterCount < app.characterIterationSpace; characterCount++) {
-            let padding = 'a'.repeat(15 - cookie.length);
+            let padding = 'a'.repeat((app.numberOfCookieCharacters - 1) - cookie.length);
             let plaintext = `${padding}${cookie}${character}`;
 
             let ciphertext = await getCiphertext(plaintext);
