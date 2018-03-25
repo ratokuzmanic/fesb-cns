@@ -1,8 +1,8 @@
 const app = {
     numberOfCookieCharacters: 16,
+    ciphertextBlockSize: 32,
     characterIterationSpace: 93,
-    firstCharacterInSpace: "!",
-    ciphertextBlockSize: 32
+    firstCharacterInSpace: "!"
 };
 
 const destination = {
@@ -38,10 +38,18 @@ const postRequest = {
     }    
 };
 
+const pbkdf2 = {
+    salt: 'salt',
+    iterations: 300000,
+    size: 32,
+    hash: 'sha512'
+}
+
 module.exports = {
     app: app,
     request: {
         getRequest: getRequest,
         postRequest: postRequest
-    }    
+    },
+    pbkdf2: pbkdf2    
 }

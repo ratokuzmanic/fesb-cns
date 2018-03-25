@@ -1,11 +1,5 @@
 const crypto = require('crypto');
-
-const pbkdf2Config = {
-    salt: 'salt',
-    iterations: 300000,
-    size: 32,
-    hash: 'sha512'
-}
+const { pbkdf2 } = require('./configs');
 
 decrypt = (mode, key, iv, ciphertext) => {
     const padding = true;
@@ -19,9 +13,9 @@ decrypt = (mode, key, iv, ciphertext) => {
     return plaintext;
 }
 
-getDecryptedJoke = (cookie, challenge) =>
+decryptChallenge = (cookie, challenge) =>
     new Promise((resolve, reject) => {
-        crypto.pbkdf2(cookie, pbkdf2Config.salt, pbkdf2Config.iterations, pbkdf2Config.size, pbkdf2Config.hash, (error, key) =>
+        crypto.pbkdf2(cookie, pbkdf2.salt, pbkdf2.iterations, pbkdf2.size, pbkdf2.hash, (error, key) =>
             error
             ? reject(`Failed to generate a key with error: ${error}`)
             : resolve(decrypt('aes-256-cbc', key, challenge.iv, challenge.ciphertext))
@@ -29,5 +23,5 @@ getDecryptedJoke = (cookie, challenge) =>
     });
 
 module.exports = {
-    getDecryptedJoke: getDecryptedJoke
+    decryptChallenge: decryptChallenge
 }

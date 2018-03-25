@@ -75,7 +75,7 @@ getCiphertext = plaintext =>
     prettyLogSuccess('Cookie discovered', `The seeked cookie is "${cookie}"`);
 
     getChallenge().then(challenge => 
-        getDecryptedJoke(cookie, challenge)
+        decryptChallenge(cookie, challenge)
         .then(plaintext => prettyLogSuccess('Joke decrypted', plaintext))
         .catch(error => prettyLogError('Error on joke decrypt', error))
     );
