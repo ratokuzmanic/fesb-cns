@@ -6,8 +6,8 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const cookie = 'rxuz2ylq3s1p4uoq';
-const joke = `There used to be a street named after Chuck Norris, but it was changed because nobody crosses Chuck Norris and lives.`;
+const cookie = 'nhyZ64MxQ71oAAd9';
+const joke = `Chuck Norris once kicked a horse in the chin. Its descendants today are known as giraffes.`;
 
 const pbkdf2Config = {
     salt: 'salt',
@@ -17,11 +17,11 @@ const pbkdf2Config = {
 }
 const challengeEncryptConfig = {
     mode: 'aes-256-cbc',
-    iv: 'f173d50e49b1bcff66b5f113da6bd733'
+    iv: 'f173d40e49b1bcfd66b5f113da6bd733'
 }
 const plaintextEncryptConfig = {
     mode: 'aes-256-ecb',
-    key: 'f273d50e49b1bcff66b5f113da6bd734f173d50e59b1bcff66b5f213da6bd733'
+    key: 'f273d50e49b1bcff66b5f113da6bd724f173d50e59b1bcaf66b5f223da6bd733'
 }
 
 encrypt = (mode, plaintext, key, iv) => {
@@ -59,4 +59,5 @@ app.post('/ecb', (request, response) => {
 
     response.end(JSON.stringify({ ciphertext }));
 });
+
 app.listen(80);
