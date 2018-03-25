@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { pbkdf2 } = require('./configs');
+const { pbkdf2 } = require('./config');
 
 decrypt = (mode, key, iv, ciphertext) => {
     const padding = true;

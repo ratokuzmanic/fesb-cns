@@ -1,6 +1,6 @@
 const http = require('http');
 const querystring = require('querystring');
-const { request: { getRequest, postRequest }, app } = require('./configs');
+const { request: { getRequest, postRequest }, app } = require('./config');
 const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
 const { getDecryptedJoke } = require('./decrypt');
 
