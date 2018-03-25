@@ -7,7 +7,8 @@ const app = {
 
 const destination = {
     host: 'localhost',
-    port: '80'
+    port: '80',
+    path: '/ecb'
 };
 
 const getRequest = {
@@ -22,7 +23,6 @@ const getRequest = {
 const postRequest = {
     urlEncoded: {
         ...destination,
-        path: '/',
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -30,7 +30,6 @@ const postRequest = {
     },
     json: {
         ...destination,
-        path: '/ecb',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

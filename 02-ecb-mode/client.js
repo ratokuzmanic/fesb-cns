@@ -2,7 +2,7 @@ const http = require('http');
 const querystring = require('querystring');
 const { request: { getRequest, postRequest }, app } = require('./config');
 const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
-const { getDecryptedJoke } = require('./decrypt');
+const { decryptChallenge } = require('./decrypt');
 
 const POST_REQUEST_CONFIG = postRequest.urlEncoded;
 

@@ -3,8 +3,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const app = express();
-const jsonParser = bodyParser.json()
-const urlEncodedParser = bodyParser.urlencoded({ extended: false })
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 const cookie = 'rxuz2ylq3s1p4uoq';
 const joke = `There used to be a street named after Chuck Norris, but it was changed because nobody crosses Chuck Norris and lives.`;
@@ -51,15 +51,12 @@ app.get('/ecb/challenge', (request, response) => {
     });
 });
 
-processRequest = (request, response) => {
+app.post('/ecb', (request, response) => {
     response.writeHead(200, { 'Content-Type': 'application/json' });
 
     const { plaintext } = request.body;
     const { ciphertext } = encrypt(plaintextEncryptConfig.mode, plaintext.concat(cookie), plaintextEncryptConfig.key);
 
     response.end(JSON.stringify({ ciphertext }));
-}
-
-app.post('/', urlEncodedParser, (request, response) => processRequest(request, response));
-app.post('/ecb', jsonParser, (request, response) => processRequest(request, response));
+});
 app.listen(80);
