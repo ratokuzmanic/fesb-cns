@@ -1,14 +1,14 @@
 const http = require('http');
 const querystring = require('querystring');
-const requestConfig = require('./configs');
+const { request: { getRequest, postRequest }, app } = require('./configs');
 const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
 const { getDecryptedJoke } = require('./decrypt');
 
-const GET_REQUEST_CONFIG = requestConfig.getRequest;
-const POST_REQUEST_CONFIG = requestConfig.postRequest.json;
+const GET_REQUEST_CONFIG = getRequest;
+const POST_REQUEST_CONFIG = postRequest.urlEncoded;
 
-takeFirstBlockFromCipherText = ciphertext =>    
-    ciphertext.slice(0, 32);
+takeFirstBlockFromCiphertext = ciphertext =>    
+    ciphertext.slice(0, app.ciphertextBlockSize);
 
 getNextCharacter = character => 
     String.fromCharCode(character.charCodeAt(0) + 1);
@@ -23,11 +23,11 @@ getChallenge = () =>
         request.end();       
     });
 
-sendPostRequest = plaintext =>
+getCiphertext = plaintext =>
     new Promise((resolve, reject) => {
-        const data = POST_REQUEST_CONFIG ===  requestConfig.postRequest.urlEncoded
-            ? querystring.stringify({ 'plaintext' : plaintext })
-            : JSON.stringify({ plaintext: plaintext });
+        const data = POST_REQUEST_CONFIG === postRequest.urlEncoded
+            ? querystring.stringify({ plaintext })
+            : JSON.stringify({ plaintext });
 
         const request = http.request(POST_REQUEST_CONFIG, response => {
             response.setEncoding('utf8');
@@ -51,18 +51,18 @@ sendPostRequest = plaintext =>
 (async () => {
     let cookie = '';
 
-    for(let cookieLetters = 0; cookieLetters < 16; cookieLetters++) {
+    for(let cookieCharacterCount = 0; cookieCharacterCount < app.numberOfCookieCharacters; cookieCharacterCount++) {
         let initialPadding = 'a'.repeat(15 - cookie.length);  
-        let goalCiphertext = await sendPostRequest(initialPadding);
-        let goalBlock = takeFirstBlockFromCipherText(goalCiphertext);
+        let goalCiphertext = await getCiphertext(initialPadding);
+        let goalBlock = takeFirstBlockFromCiphertext(goalCiphertext);
 
-        let character = "!";
-        for(let possibleCharacters = 0; possibleCharacters < 93; possibleCharacters++) {
+        let character = app.firstCharacterInSpace;
+        for(let characterCount = 0; characterCount < app.characterIterationSpace; characterCount++) {
             let padding = 'a'.repeat(15 - cookie.length);
             let plaintext = `${padding}${cookie}${character}`;
 
-            let ciphertext = await sendPostRequest(plaintext);
-            let firstBlock = takeFirstBlockFromCipherText(ciphertext);
+            let ciphertext = await getCiphertext(plaintext);
+            let firstBlock = takeFirstBlockFromCiphertext(ciphertext);
 
             if(firstBlock === goalBlock) {
                 cookie += character;

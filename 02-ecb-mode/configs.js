@@ -1,10 +1,17 @@
-const common = {
+const app = {
+    numberOfCookieCharacters: 16,
+    characterIterationSpace: 93,
+    firstCharacterInSpace: "!",
+    ciphertextBlockSize: 32
+};
+
+const destination = {
     host: 'localhost',
     port: '80'
 };
 
 const getRequest = {
-    ...common,
+    ...destination,
     path: '/',
     method: 'GET',
     headers: {
@@ -14,7 +21,7 @@ const getRequest = {
 
 const postRequest = {
     urlEncoded: {
-        ...common,
+        ...destination,
         path: '/',
         method: 'POST',
         headers: {
@@ -22,7 +29,7 @@ const postRequest = {
         }
     },
     json: {
-        ...common,
+        ...destination,
         path: '/ecb',
         method: 'POST',
         headers: {
@@ -32,6 +39,9 @@ const postRequest = {
 };
 
 module.exports = {
-    getRequest: getRequest,
-    postRequest: postRequest
+    app: app,
+    request: {
+        getRequest: getRequest,
+        postRequest: postRequest
+    }    
 }
