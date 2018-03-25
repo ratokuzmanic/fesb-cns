@@ -12,7 +12,7 @@ const destination = {
 
 const getRequest = {
     ...destination,
-    path: '/',
+    path: '/ecb/challenge',
     method: 'GET',
     headers: {
         'Content-Type': 'application/json'

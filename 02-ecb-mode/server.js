@@ -42,7 +42,7 @@ encrypt = (mode, plaintext, key, iv) => {
     };
 }
 
-app.get('/', (request, response) => {
+app.get('/ecb/challenge', (request, response) => {
     response.writeHead(200, { 'Content-Type': 'application/json' });
 
     crypto.pbkdf2(cookie, pbkdf2Config.salt, pbkdf2Config.iterations, pbkdf2Config.size, pbkdf2Config.hash, (err, key) => {
