@@ -23,11 +23,6 @@ const POST_REQUEST_CONFIG = {
     }
 }
 
-getNextIv = (iv, shift) => {
-    const diff = add(shift, Buffer.from(iv, 'hex'));
-    return diff.slice(0, diff.byteLength - 1);
-}
-
 getChallenge = () => 
     new Promise((resolve, reject) => {
         const request = http.request(GET_REQUEST_CONFIG, response => {
@@ -53,28 +48,32 @@ getIvAndCiphertext = plaintext =>
         request.end();
     });
 
+getNextIv = (iv, shift) => {
+    const diff = add(shift, Buffer.from(iv, 'hex'));
+    return diff.slice(0, diff.byteLength - 1);
+}
+
+async function getShift() {
+    const { iv: firstIv  } = await getIvAndCiphertext('test');
+    const { iv: secondIv } = await getIvAndCiphertext('test');
+    return subtract(Buffer.from(secondIv, 'hex'), Buffer.from(firstIv, 'hex'));
+}
+
 (async () => {
-    const { 
-        iv: challengeIv, 
-        ciphertext: challengeCiphertext 
-    } = await getChallenge();
+    const { iv, ciphertext } = await getChallenge();
+    const shift = await getShift(); 
+    
+    const challengeIv = Buffer.from(iv, 'hex');
+    const { iv: currentIv } = await getIvAndCiphertext('test');
+    let iterationIv = getNextIv(currentIv, shift);
 
-    const { iv: singleShiftedIv } = await getIvAndCiphertext('test');
-    const shift = subtract(Buffer.from(singleShiftedIv, 'hex'), Buffer.from(challengeIv, 'hex'));
+    for(let i = 0; i < 4; i++) {
+        let plaintext = Buffer.from('zeppelin', 'utf8');    
+        let plaintextWithPadding = Buffer.from(pkcs7.pad(plaintext));
 
-    /* Iteration */
+        let payload = xor(xor(iterationIv, challengeIv), plaintextWithPadding).toString('hex');
+        console.log(await getIvAndCiphertext(payload));
 
-    let challengeIv_buffer = Buffer.from(challengeIv, 'hex');
-    let plaintext = Buffer.from('zeppelin', 'utf8');
-    let iv = getNextIv(singleShiftedIv, shift);
-
-    let plaintextWithPadding = Buffer.from(pkcs7.pad(plaintext));
-
-    for(let i = 0; i < 1; i++) {
-        let payload = xor(xor(iv, challengeIv_buffer), plaintextWithPadding);
-        console.log(payload.toString('hex'));
-        console.log(await getIvAndCiphertext(payload.toString('hex')));
-
-        iv = getNextIv(iv, shift);
+        iterationIv = getNextIv(iterationIv, shift);
     }
 })();
