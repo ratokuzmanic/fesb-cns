@@ -1,5 +1,6 @@
 const http = require('http');
 const { subtract, add } = require('math-buffer');
+const xor = require('buffer-xor');
 
 const GET_REQUEST_CONFIG = {
     host: 'localhost',
@@ -23,7 +24,7 @@ const POST_REQUEST_CONFIG = {
 
 getNextIv = (iv, shift) => {
     const diff = add(shift, Buffer.from(iv, 'hex'));
-    return diff.slice(0, diff.byteLength -1);
+    return diff.slice(0, diff.byteLength - 1);
 }
 
 getChallenge = () => 
@@ -60,9 +61,19 @@ getIvAndCiphertext = plaintext =>
     const { iv: singleShiftedIv } = await getIvAndCiphertext('test');
     const shift = subtract(Buffer.from(singleShiftedIv, 'hex'), Buffer.from(challengeIv, 'hex'));
 
+    /* Iteration */
+
+    let challengeIv_buffer = Buffer.from(challengeIv, 'hex');
+    let plaintext = Buffer.from('zeppelin', 'utf8');
     let iv = getNextIv(singleShiftedIv, shift);
-    for(let i = 0; i < 5; i++) {
-        console.log(iv);
+
+    console.log(plaintext)
+
+    for(let i = 0; i < 1; i++) {
+        let payload = xor(xor(iv, challengeIv_buffer), plaintext);
+        console.log(payload.toString('hex'));
+        //console.log(await getIvAndCiphertext(payload.toString('hex')));
+
         iv = getNextIv(iv, shift);
     }
 })();

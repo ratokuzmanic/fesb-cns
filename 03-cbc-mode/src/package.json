@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "buffer-xor": "^2.0.2",
     "math-buffer": "^0.1.1"
   }
 }
