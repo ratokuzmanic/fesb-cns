@@ -3,6 +3,7 @@ const { subtract, add } = require('math-buffer');
 const xor = require('buffer-xor');
 var pkcs7 = require('pkcs7');
 var fs = require('fs');
+const incrementIv = require('./add');
 
 const wordlist = fs.readFileSync('wordlist.txt').toString().split("\n");
 
@@ -51,10 +52,13 @@ getIvAndCiphertext = plaintext =>
         request.end();
     });
 
-getNextIv = (iv, shift) => {
-    const diff = add(shift, Buffer.from(iv, 'hex'));
-    return diff.slice(0, diff.byteLength - 1);
+incrementIvWrapped = (iv, shift) => {
+    const addend = parseInt(shift.toString('hex'));
+    incrementIv(iv, addend);
 }
+
+isHit = (possibleCiphertext, challengeCiphertext) =>
+    possibleCiphertext.slice(0, 32) === challengeCiphertext
 
 async function getShift() {
     const { iv: firstIv  } = await getIvAndCiphertext('test');
@@ -64,20 +68,25 @@ async function getShift() {
 
 (async () => {
     const { iv, ciphertext } = await getChallenge();
-    const shift = await getShift(); 
+    const shift = await getShift();
     
     const challengeIv = Buffer.from(iv, 'hex');
     const { iv: currentIv } = await getIvAndCiphertext('test');
-    let iterationIv = getNextIv(currentIv, shift);
+    let iterationIv = Buffer.from(currentIv, 'hex');
+    incrementIvWrapped(iterationIv, shift);
 
     for(var wordIndex in wordlist) {
-        console.log(wordlist[wordIndex]);
         let plaintext = Buffer.from(wordlist[wordIndex], 'utf8');    
         let plaintextWithPadding = Buffer.from(pkcs7.pad(plaintext));
 
         let payload = xor(xor(iterationIv, challengeIv), plaintextWithPadding).toString('hex');
-        console.log(await getIvAndCiphertext(payload));
+        
+        let { ciphertext: possibleHit } = await getIvAndCiphertext(payload);
+        if(isHit(possibleHit, ciphertext)) {
+            console.log(`Word: ${wordlist[wordIndex]}`);
+            break;
+        }
 
-        iterationIv = getNextIv(iterationIv, shift);
+        incrementIvWrapped(iterationIv, shift);
     }
 })();
