@@ -2,6 +2,9 @@ const http = require('http');
 const { subtract, add } = require('math-buffer');
 const xor = require('buffer-xor');
 var pkcs7 = require('pkcs7');
+var fs = require('fs');
+
+const wordlist = fs.readFileSync('wordlist.txt').toString().split("\n");
 
 const GET_REQUEST_CONFIG = {
     host: 'localhost',
@@ -67,8 +70,9 @@ async function getShift() {
     const { iv: currentIv } = await getIvAndCiphertext('test');
     let iterationIv = getNextIv(currentIv, shift);
 
-    for(let i = 0; i < 4; i++) {
-        let plaintext = Buffer.from('zeppelin', 'utf8');    
+    for(var wordIndex in wordlist) {
+        console.log(wordlist[wordIndex]);
+        let plaintext = Buffer.from(wordlist[wordIndex], 'utf8');    
         let plaintextWithPadding = Buffer.from(pkcs7.pad(plaintext));
 
         let payload = xor(xor(iterationIv, challengeIv), plaintextWithPadding).toString('hex');
