@@ -1,6 +1,7 @@
 const http = require('http');
 const { subtract, add } = require('math-buffer');
 const xor = require('buffer-xor');
+var pkcs7 = require('pkcs7');
 
 const GET_REQUEST_CONFIG = {
     host: 'localhost',
@@ -67,12 +68,12 @@ getIvAndCiphertext = plaintext =>
     let plaintext = Buffer.from('zeppelin', 'utf8');
     let iv = getNextIv(singleShiftedIv, shift);
 
-    console.log(plaintext)
+    let plaintextWithPadding = Buffer.from(pkcs7.pad(plaintext));
 
     for(let i = 0; i < 1; i++) {
-        let payload = xor(xor(iv, challengeIv_buffer), plaintext);
+        let payload = xor(xor(iv, challengeIv_buffer), plaintextWithPadding);
         console.log(payload.toString('hex'));
-        //console.log(await getIvAndCiphertext(payload.toString('hex')));
+        console.log(await getIvAndCiphertext(payload.toString('hex')));
 
         iv = getNextIv(iv, shift);
     }
