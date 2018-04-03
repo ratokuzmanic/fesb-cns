@@ -1,29 +1,36 @@
 const chalk = require('chalk');
 
-wrapStringWithWhitespace = (string, numberOfWhitespaces) => 
-    `${' '.repeat(numberOfWhitespaces)}${string}${' '.repeat(numberOfWhitespaces)}`;
-    
-logHex = (title, string) => {
-    const stringWithSeparators = string
-        .replace(/(.{2})/g,"$1:")
-        .slice(0, -1);
-    const bitCount = string.length * 4;
-    const byteCount = bitCount / 8;
+String.prototype.addWhitespacePadding = function(numberOfWhitespaces = 8) {
+    return `${' '.repeat(numberOfWhitespaces)}${this}${' '.repeat(numberOfWhitespaces)}`;
+}
 
-    console.log(`\n${chalk.inverse(wrapStringWithWhitespace(title, 8))}`);
+String.prototype.hexFormat = function () {
+    return this.replace(/(.{2})/g,"$1:").slice(0, -1);
+}
+
+String.prototype.bitCount = function() {
+    return this.length * 4;
+}
+
+String.prototype.byteCount = function() {
+    return this.length / 2;
+}
+
+logHex = (title, string) => {
+    console.log(`\n${chalk.inverse(title.addWhitespacePadding())}`);
     console.log(`String:     ${string}`);
-    console.log(`Hex format: ${chalk.yellow(stringWithSeparators)}`);
-    console.log(`Length of hex string is ${chalk.green(`${string.length} characters`)} equal to ${chalk.green(`${bitCount} bits`)} and ${chalk.green(`${byteCount} bytes`)}\n`);    
+    console.log(`Hex format: ${chalk.yellow(string.hexFormat())}`);
+    console.log(`Length of hex string is ${chalk.green(`${string.length} characters`)} equal to ${chalk.green(`${string.bitCount()} bits`)} and ${chalk.green(`${string.byteCount()} bytes`)}\n`);    
 }
 
 logError = (title, error) => {
-    console.log(`\n${chalk.white.bgRed(wrapStringWithWhitespace(title, 8))}`);
-    console.log(`Details: ${error}`);
+    console.log(`\n${chalk.white.bgRed(title.addWhitespacePadding())}`);
+    console.log(`Details: ${error}\n`);
 }
 
 logSuccess = (title, details) => {
-    console.log(`\n${chalk.black.bgGreen(wrapStringWithWhitespace(title, 8))}`);
-    console.log(`Details: ${details}`);
+    console.log(`\n${chalk.black.bgGreen(title.addWhitespacePadding())}`);
+    console.log(`Details: ${details}\n`);
 }
 
 module.exports = {

@@ -1,10 +1,8 @@
 const http = require('http');
 const querystring = require('querystring');
-const { request: { getRequest, postRequest }, app } = require('./config');
 const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
+const { request: { get: getRequest, post: postRequest }, app } = require('./config');
 const { decryptChallenge } = require('./decrypt');
-
-const POST_REQUEST_CONFIG = postRequest.urlEncoded;
 
 takeFirstBlockFromCiphertext = ciphertext =>    
     ciphertext.slice(0, app.ciphertextBlockSize);
@@ -24,12 +22,9 @@ getChallenge = () =>
 
 getCiphertext = plaintext =>
     new Promise((resolve, reject) => {
-        const data = 
-            POST_REQUEST_CONFIG === postRequest.urlEncoded
-            ? querystring.stringify({ plaintext })
-            : JSON.stringify({ plaintext });
+        const data = JSON.stringify({ plaintext });
 
-        const request = http.request(POST_REQUEST_CONFIG, response => {
+        const request = http.request(postRequest, response => {
             response.setEncoding('utf8');
 
             response.on('data', data => {
@@ -52,17 +47,17 @@ getCiphertext = plaintext =>
     let cookie = '';
 
     for(let cookieCharacterCount = 0; cookieCharacterCount < app.numberOfCookieCharacters; cookieCharacterCount++) {
-        let initialPadding = 'a'.repeat((app.numberOfCookieCharacters - 1) - cookie.length);  
-        let goalCiphertext = await getCiphertext(initialPadding);
-        let goalBlock = takeFirstBlockFromCiphertext(goalCiphertext);
+        const initialPadding = 'a'.repeat((app.numberOfCookieCharacters - 1) - cookie.length);  
+        const goalCiphertext = await getCiphertext(initialPadding);
+        const goalBlock = takeFirstBlockFromCiphertext(goalCiphertext);
 
         let character = app.firstCharacterInSpace;
         for(let characterCount = 0; characterCount < app.characterIterationSpace; characterCount++) {
-            let padding = 'a'.repeat((app.numberOfCookieCharacters - 1) - cookie.length);
-            let plaintext = `${padding}${cookie}${character}`;
+            const padding = 'a'.repeat((app.numberOfCookieCharacters - 1) - cookie.length);
+            const plaintext = `${padding}${cookie}${character}`;
 
-            let ciphertext = await getCiphertext(plaintext);
-            let firstBlock = takeFirstBlockFromCiphertext(ciphertext);
+            const ciphertext = await getCiphertext(plaintext);
+            const firstBlock = takeFirstBlockFromCiphertext(ciphertext);
 
             if(firstBlock === goalBlock) {
                 cookie += character;
@@ -74,9 +69,8 @@ getCiphertext = plaintext =>
 
     prettyLogSuccess('Cookie discovered', `The seeked cookie is "${cookie}"`);
 
-    getChallenge().then(challenge => 
-        decryptChallenge(cookie, challenge)
-        .then(plaintext => prettyLogSuccess('Joke decrypted', plaintext))
-        .catch(error => prettyLogError('Error on joke decrypt', error))
-    );
+    const challenge = await getChallenge();
+    decryptChallenge(cookie, challenge)
+    .then(plaintext => prettyLogSuccess('Joke decrypted', plaintext))
+    .catch(error => prettyLogError('Error on joke decrypt', error));
 })();

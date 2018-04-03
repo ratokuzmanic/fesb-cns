@@ -5,36 +5,24 @@ const app = {
     firstCharacterInSpace: "!"
 };
 
-const destination = {
+const commonRequest = {
     host: 'localhost',
-    port: '80',
-    path: '/ecb'
-};
-
-const getRequest = {
-    ...destination,
-    path: '/ecb/challenge',
-    method: 'GET',
+    port: 3000,
     headers: {
         'Content-Type': 'application/json'
     }
 };
 
+const getRequest = {
+    ...commonRequest,
+    path: '/ecb/challenge',
+    method: 'GET'    
+};
+
 const postRequest = {
-    urlEncoded: {
-        ...destination,
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    },
-    json: {
-        ...destination,
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }        
-    }    
+    ...commonRequest,
+    path: '/ecb',
+    method: 'POST'
 };
 
 const pbkdf2 = {
@@ -42,13 +30,13 @@ const pbkdf2 = {
     iterations: 300000,
     size: 32,
     hash: 'sha512'
-}
+};
 
 module.exports = {
     app: app,
     request: {
-        getRequest: getRequest,
-        postRequest: postRequest
+        get: getRequest,
+        post: postRequest
     },
     pbkdf2: pbkdf2    
 }
