@@ -1,5 +1,4 @@
 const http = require('http');
-const querystring = require('querystring');
 const { prettyLogHex, prettyLogError, prettyLogSuccess } = require('./logger');
 const { request: { get: getRequest, post: postRequest }, app } = require('./config');
 const { decryptChallenge } = require('./decrypt');
