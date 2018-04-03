@@ -1,35 +1,16 @@
+const fs = require('fs');
 const http = require('http');
-const { subtract, add } = require('math-buffer');
 const xor = require('buffer-xor');
-var pkcs7 = require('pkcs7');
-var fs = require('fs');
-const incrementIv = require('./add');
+const pkcs7 = require('pkcs7');
+const incrementIv = require('./utils');
+const { subtract } = require('math-buffer');
+const { app, request: { getRequest, postRequest } } = require('./config');
 
 const wordlist = fs.readFileSync('wordlist.txt').toString().split("\n");
 
-const GET_REQUEST_CONFIG = {
-    host: 'localhost',
-    port: '3000',
-    path: '/cbc/iv/challenge',
-    method: 'GET',
-    headers: {
-        'Content-Type': 'application/json'
-    }
-}
-
-const POST_REQUEST_CONFIG = {
-    host: 'localhost',
-    port: '3000',
-    path: '/cbc/iv',
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    }
-}
-
 getChallenge = () => 
     new Promise((resolve, reject) => {
-        const request = http.request(GET_REQUEST_CONFIG, response => {
+        const request = http.request(getRequest, response => {
             let data = '';
             response.on('data', chunk => data += chunk);    
             response.on('end', () => resolve(JSON.parse(data)));
@@ -41,7 +22,7 @@ getIvAndCiphertext = plaintext =>
     new Promise((resolve, reject) => {
         const data = JSON.stringify({ plaintext });
 
-        const request = http.request(POST_REQUEST_CONFIG, response => {
+        const request = http.request(postRequest, response => {
             response.setEncoding('utf8');
 
             response.on('data', data => resolve(JSON.parse(data)));            
@@ -52,41 +33,38 @@ getIvAndCiphertext = plaintext =>
         request.end();
     });
 
-incrementIvWrapped = (iv, shift) => {
-    const addend = parseInt(shift.toString('hex'));
-    incrementIv(iv, addend);
-}
-
-isHit = (possibleCiphertext, challengeCiphertext) =>
-    possibleCiphertext.slice(0, 32) === challengeCiphertext
-
-async function getShift() {
+async function getIncrementSize() {
     const { iv: firstIv  } = await getIvAndCiphertext('test');
-    const { iv: secondIv } = await getIvAndCiphertext('test');
-    return subtract(Buffer.from(secondIv, 'hex'), Buffer.from(firstIv, 'hex'));
+    const { iv: secondIv } = await getIvAndCiphertext('test');    
+    const diff = subtract(Buffer.from(secondIv, 'hex'), Buffer.from(firstIv, 'hex'));
+    return parseInt(diff.toString('hex'));
 }
+
+isHit = (possibleCiphertextHit, challengeCiphertext) =>
+    possibleCiphertextHit.slice(0, app.ciphertextBlockSize) === challengeCiphertext;
 
 (async () => {
     const { iv, ciphertext } = await getChallenge();
-    const shift = await getShift();
-    
     const challengeIv = Buffer.from(iv, 'hex');
+
+    const incrementSize = await getIncrementSize();
+    
     const { iv: currentIv } = await getIvAndCiphertext('test');
     let iterationIv = Buffer.from(currentIv, 'hex');
-    incrementIvWrapped(iterationIv, shift);
+    incrementIv(iterationIv, incrementSize);
 
-    for(var wordIndex in wordlist) {
-        let plaintext = Buffer.from(wordlist[wordIndex], 'utf8');    
-        let plaintextWithPadding = Buffer.from(pkcs7.pad(plaintext));
+    for(var index in wordlist) {
+        let plaintext = Buffer.from(wordlist[index], 'utf8');    
+        let paddedPlaintext = Buffer.from(pkcs7.pad(plaintext));
 
-        let payload = xor(xor(iterationIv, challengeIv), plaintextWithPadding).toString('hex');
+        let payload = xor(xor(iterationIv, challengeIv), paddedPlaintext);
         
-        let { ciphertext: possibleHit } = await getIvAndCiphertext(payload);
-        if(isHit(possibleHit, ciphertext)) {
-            console.log(`Word: ${wordlist[wordIndex]}`);
+        let { ciphertext: possibleCiphertextHit } = await getIvAndCiphertext(payload.toString('hex'));
+        if(isHit(possibleCiphertextHit, ciphertext)) {
+            console.log(`Word: ${wordlist[index]}`);
             break;
         }
 
-        incrementIvWrapped(iterationIv, shift);
+        incrementIv(iterationIv, incrementSize);
     }
 })();
