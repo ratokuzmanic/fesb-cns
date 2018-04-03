@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "buffer-xor": "^2.0.2",
+    "chalk": "^2.3.2",
     "math-buffer": "^0.1.1",
     "pkcs7": "^1.0.2"
   }

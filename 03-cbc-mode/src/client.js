@@ -4,6 +4,7 @@ const xor = require('buffer-xor');
 const pkcs7 = require('pkcs7');
 const incrementIv = require('./utils');
 const { subtract } = require('math-buffer');
+const { prettyLogSuccess, prettyLogError } = require('./logger');
 const { app, request: { getRequest, postRequest } } = require('./config');
 
 const wordlist = fs.readFileSync('wordlist.txt').toString().split("\n");
@@ -26,7 +27,10 @@ getIvAndCiphertext = plaintext =>
             response.setEncoding('utf8');
 
             response.on('data', data => resolve(JSON.parse(data)));            
-            response.on('error', error => reject());
+            response.on('error', error => { 
+                prettyLogError('Error on POST request', error);
+                reject(error);
+            });
         });
 
         request.write(data);
@@ -53,15 +57,15 @@ isHit = (possibleCiphertextHit, challengeCiphertext) =>
     let iterationIv = Buffer.from(currentIv, 'hex');
     incrementIv(iterationIv, incrementSize);
 
-    for(var index in wordlist) {
-        let plaintext = Buffer.from(wordlist[index], 'utf8');    
-        let paddedPlaintext = Buffer.from(pkcs7.pad(plaintext));
+    for(let index in wordlist) {
+        const plaintext = Buffer.from(wordlist[index], 'utf8');    
+        const paddedPlaintext = Buffer.from(pkcs7.pad(plaintext));
 
-        let payload = xor(xor(iterationIv, challengeIv), paddedPlaintext);
+        const payload = xor(xor(iterationIv, challengeIv), paddedPlaintext);
         
-        let { ciphertext: possibleCiphertextHit } = await getIvAndCiphertext(payload.toString('hex'));
+        const { ciphertext: possibleCiphertextHit } = await getIvAndCiphertext(payload.toString('hex'));
         if(isHit(possibleCiphertextHit, ciphertext)) {
-            console.log(`Word: ${wordlist[index]}`);
+            prettyLogSuccess('Seeked word found', wordlist[index]);
             break;
         }
 
