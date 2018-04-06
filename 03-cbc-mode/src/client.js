@@ -5,7 +5,7 @@ const pkcs7 = require('pkcs7');
 const incrementIv = require('./utils');
 const { subtract } = require('math-buffer');
 const { prettyLogSuccess, prettyLogError } = require('./logger');
-const { app, request: { getRequest, postRequest } } = require('./config');
+const { app, request: { get: getRequest, post: postRequest } } = require('./config');
 
 const wordlist = fs.readFileSync('wordlist.txt').toString().split("\n");
 

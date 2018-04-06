@@ -4,7 +4,7 @@ const app = {
 
 const commonRequest = {
     host: 'localhost',
-    port: '3000',
+    port: 3000,
     headers: {
         'Content-Type': 'application/json'
     }
@@ -25,7 +25,7 @@ const postRequest = {
 module.exports = {
     app: app,
     request: {
-        getRequest: getRequest,
-        postRequest: postRequest
+        get: getRequest,
+        post: postRequest
     }
 }
