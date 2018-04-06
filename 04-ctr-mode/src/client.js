@@ -46,7 +46,7 @@ async function shouldAlwaysHaltAction(challengeCiphertext, payload) {
 
     plaintext
     ? prettyLogSuccess('Joke found', plaintext)
-    : prettyLogError('Joke not found', 'Maximum iteration count was reached. Try increasing the threashold in config.js');
+    : prettyLogError('Joke not found', 'Maximum iteration count was reached. Try increasing the threshold in config.js');
 }
 
 async function shouldntAlwaysHaltAction(challengeCiphertext, payload) {
