@@ -9,7 +9,8 @@ const {
     ECB_COOKIE,
     ECB_CHALLENGE,
     CBC_IV_CHALLENGE,
-    CBC_IV_INCREMENT=4
+    CBC_IV_INCREMENT=4,
+    CTR_CHALLENGE
 } = process.env
 
 const dev = {
@@ -34,6 +35,7 @@ const dev = {
     PLAINTEXT_LIMIT: 64,
     CBC_IV_CHALLENGE,
     CBC_IV_INCREMENT: parseInt(CBC_IV_INCREMENT, 10),
+    CTR_CHALLENGE,
 
     //-----------------------------
     // VIEW TEXT (for GET requests)
@@ -123,9 +125,21 @@ const dev = {
                     paths: [{
                         path: '/ctr',
                         method: 'POST',
+                        params: '{ plaintext: string (hex) }',
+                        response: '{ ciphertext: string (hex) }', 
+                        description: `Fetch an encrypted plaintext in the CTR mode. The 
+                        crypto oracle uses a random but low-entropy initialization vector 
+                        (IV); i.e., the IV is selected randomly from a small set of values.`
+                    },
+
+                    {
+                        path: '/ctr/challenge',
+                        method: 'GET',
                         params: 'none',
-                        response: '{ ciphertext: "CTR mode" }',
-                        description: 'More to come later'
+                        response: '{ ciphertext: string (hex) }',
+                        description: `Fetch a challenge encrypted in the CTR mode using 
+                        a random but low-entropy initialization vector (IV); i.e., the IV 
+                        is selected randomly from a small set of values.`
                     }]
                 }],
             }
