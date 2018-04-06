@@ -1,7 +1,7 @@
 const http = require('http');
-const crypto = require('crypto');
 const xor = require('buffer-xor');
-const { request: { get: getRequest, post: postRequest } } = require('./config');
+const { prettyLogSuccess, prettyLogError } = require('./logger');
+const { app, request: { get: getRequest, post: postRequest } } = require('./config');
 
 getChallenge = () => 
     new Promise((resolve, reject) => {
@@ -28,27 +28,43 @@ getCiphertext = plaintext =>
         request.end();
     });
 
-decodePlaintext = (challengeCiphertext, ciphertext, plaintext) => 
-    xor(xor(Buffer.from(challengeCiphertext, 'hex'), Buffer.from(ciphertext, 'hex')), Buffer.from(plaintext, 'hex')).toString('utf8');
+getZeroHexOfSameSizeAs = source => '0'.repeat(source.length);
 
 isHit = possiblePlaintext => possiblePlaintext.includes('Chuck');
 
-getZeroOuttedBufferOfSameSize = source => {
-    const length = source.length / 2;
-    return Buffer.alloc(length).toString('hex');
+async function shouldAlwaysHaltAction(challengeCiphertext, payload) {
+    let plaintext = null;
+
+    for(let iteration = 0; iteration < app.maxIterationCount; iteration++) {
+        let { ciphertext } = await getCiphertext(payload);
+        let possiblePlaintext = xor(Buffer.from(challengeCiphertext, 'hex'), Buffer.from(ciphertext, 'hex')).toString('utf8');
+        if(isHit(possiblePlaintext)) {
+            plaintext = possiblePlaintext;            
+            break;
+        }
+    }
+
+    plaintext
+    ? prettyLogSuccess('Joke found', plaintext)
+    : prettyLogError('Joke not found', 'Maximum iteration count was reached. Try increasing the threashold in config.js');
+}
+
+async function shouldntAlwaysHaltAction(challengeCiphertext, payload) {
+    while(true) {
+        let { ciphertext } = await getCiphertext(payload);
+        let possiblePlaintext = xor(Buffer.from(challengeCiphertext, 'hex'), Buffer.from(ciphertext, 'hex')).toString('utf8');
+        if(isHit(possiblePlaintext)) {
+            prettyLogSuccess('Joke found', possiblePlaintext);           
+            break;
+        }
+    }
 }
 
 (async () => {
     const { ciphertext } = await getChallenge();
-    const myText = getZeroOuttedBufferOfSameSize(ciphertext);
-
-    while(true) {
-        let { ciphertext: ciph } = await getCiphertext(myText);
-        let possiblePlaintext = decodePlaintext(ciphertext, ciph, myText);
-        if(isHit(possiblePlaintext)) {
-            console.log(possiblePlaintext);
-            break;
-        }
-    }
+    const payload = getZeroHexOfSameSizeAs(ciphertext);
     
+    app.shouldAlwaysHalt 
+    ? shouldAlwaysHaltAction(ciphertext, payload) 
+    : shouldntAlwaysHaltAction(ciphertext, payload);
 })();

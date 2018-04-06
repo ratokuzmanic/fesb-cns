@@ -1,3 +1,8 @@
+const app = {
+    shouldAlwaysHalt: false,
+    maxIterationCount: 5000
+}
+
 const commonRequest = {
     host: 'localhost',
     port: 3000,
@@ -19,6 +24,7 @@ const postRequest = {
 };
 
 module.exports = {
+    app: app,
     request: {
         get: getRequest,
         post: postRequest
