@@ -1,5 +1,6 @@
 const http = require('http');
 const crypto = require('crypto');
+const xor = require('buffer-xor');
 const { request: { get: getRequest, post: postRequest } } = require('./config');
 
 getChallenge = () => 
@@ -27,6 +28,11 @@ getCiphertext = plaintext =>
         request.end();
     });
 
+decodePlaintext = (challengeCiphertext, ciphertext, plaintext) => 
+    xor(xor(Buffer.from(challengeCiphertext, 'hex'), Buffer.from(ciphertext, 'hex')), Buffer.from(plaintext, 'hex')).toString('utf8');
+
+isHit = possiblePlaintext => possiblePlaintext.includes('Chuck');
+
 getZeroOuttedBufferOfSameSize = source => {
     const length = source.length / 2;
     return Buffer.alloc(length).toString('hex');
@@ -34,5 +40,15 @@ getZeroOuttedBufferOfSameSize = source => {
 
 (async () => {
     const { ciphertext } = await getChallenge();
+    const myText = getZeroOuttedBufferOfSameSize(ciphertext);
 
+    while(true) {
+        let { ciphertext: ciph } = await getCiphertext(myText);
+        let possiblePlaintext = decodePlaintext(ciphertext, ciph, myText);
+        if(isHit(possiblePlaintext)) {
+            console.log(possiblePlaintext);
+            break;
+        }
+    }
+    
 })();
