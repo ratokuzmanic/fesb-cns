@@ -2,8 +2,8 @@ const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
 const { decryptChallenge } = require('./decrypt');
-const { getRequest, postRequest } = require('./utils');
 const { prettyLogSuccess } = require('./logger');
+const { getRequest, postRequest } = require('./utils');
 const { RSA, diffieHellman, getChallenge: getChallengeConfig } = require('./config');
 
 const clientRSA = {
@@ -46,8 +46,7 @@ digitallySignWithPrivateRSAKey = (elementToSign) => {
 
     const { key, challenge } = await getChallenge();
  
-    const sharedKey = diffieHellmanService.computeSecret(key, 'hex');
-    const plaintext = await decryptChallenge(sharedKey, challenge);
-
+    const sharedSecretForKeyDerivation = diffieHellmanService.computeSecret(key, 'hex');
+    const plaintext = await decryptChallenge(sharedSecretForKeyDerivation, challenge);
     prettyLogSuccess('Joke decrypted', plaintext);
 })();

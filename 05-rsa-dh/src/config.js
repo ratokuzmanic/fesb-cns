@@ -28,7 +28,7 @@ const getChallenge = {
     ...commonRequest,
     path: '/asymm/challenge',
     method: 'GET'
-}
+};
 
 const pbkdf2 = {
     salt: 'ServerClient',
