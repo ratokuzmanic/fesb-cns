@@ -2,7 +2,7 @@ const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
 const { decryptChallenge } = require('./decrypt');
-const { prettyLogSuccess } = require('./logger');
+const { prettyLogSuccess, prettyLogError } = require('./logger');
 const { getRequest, postRequest } = require('./utils');
 const { RSA, diffieHellman, getChallenge: getChallengeConfig } = require('./config');
 
@@ -39,14 +39,29 @@ digitallySignWithPrivateRSAKey = (elementToSign) => {
     return sign.sign(clientRSA.privateKey, 'hex');
 }
 
+verifySignatureWithPublicRSAKey = (publicKey, signature, content) => {
+    const verify = crypto.createVerify('RSA-SHA256');
+    verify.write(content);
+    verify.end();
+    return verify.verify(Buffer.from(publicKey, 'hex'), signature, 'hex');
+}
+
 (async () => {
     const { key: serverRSAPublicKey } = await getServerRSAPublicKey();
     await postClientRSAPublicKey(clientRSA.publicKey.toString('hex'));
     await postClientDiffieHellmanPublicKey(clientDiffieHellman.publicKey, digitallySignWithPrivateRSAKey(clientDiffieHellman.publicKey));
 
-    const { key, challenge } = await getChallenge();
- 
-    const sharedSecretForKeyDerivation = diffieHellmanService.computeSecret(key, 'hex');
-    const plaintext = await decryptChallenge(sharedSecretForKeyDerivation, challenge);
-    prettyLogSuccess('Joke decrypted', plaintext);
+    const { key, signature, challenge } = await getChallenge();
+    const isSignatureOk = verifySignatureWithPublicRSAKey(serverRSAPublicKey, signature, key + clientDiffieHellman.publicKey.toString('hex'));
+
+    if(isSignatureOk)
+    {
+        const sharedSecretForKeyDerivation = diffieHellmanService.computeSecret(key, 'hex');
+        const plaintext = await decryptChallenge(sharedSecretForKeyDerivation, challenge);
+        prettyLogSuccess('Joke decrypted', plaintext);
+    }
+    else
+    {
+        prettyLogError('Signature invalid', 'Signature of Diffie Hellman public keys is invalid');
+    }
 })();
