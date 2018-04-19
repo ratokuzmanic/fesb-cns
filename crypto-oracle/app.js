@@ -20,6 +20,7 @@ const arp = rootrequire('routes/arp')
 const ecb = rootrequire('routes/ecb')
 const cbc = rootrequire('routes/cbc')
 const ctr = rootrequire('routes/ctr')
+const asymm = rootrequire('routes/asymm')
 
 const app = express()
 
@@ -42,6 +43,7 @@ app.use('/arp', arp)
 app.use('/ecb', ecb)
 app.use('/cbc', cbc)
 app.use('/ctr', ctr)
+app.use('/asymm', asymm)
 
 //---------------------------
 // ERROR HANDLERS

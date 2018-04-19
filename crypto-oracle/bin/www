@@ -24,6 +24,10 @@ try {
         {name: 'ECB_CHALLENGE'},
         {name: 'CBC_IV_CHALLENGE'},
         {name: 'CBC_IV_INCREMENT'},
+        {name: 'CTR_CHALLENGE'},
+        // {name: 'PUBLIC_KEY'},
+        // {name: 'PRIVATE_KEY'},
+        {name: 'ASYMM_CHALLENGE'},
         {name: 'VIEW'},
         {name: 'ERRORS'}
     ], config)

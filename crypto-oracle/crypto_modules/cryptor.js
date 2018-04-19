@@ -115,6 +115,6 @@ function decrypt({
         console.log("Decryptor: %o", plaintext)
     
     } catch(err) {
-        console.err(err)
+        console.error(err)
     }
 })()

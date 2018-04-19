@@ -1,6 +1,6 @@
 const commonRequest = {
-    host: '10.0.0.6',
-    port: 80,
+    host: 'localhost',
+    port: 3000,
     headers: {
         'Content-Type': 'application/json'
     }

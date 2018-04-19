@@ -10,7 +10,10 @@ const {
     ECB_CHALLENGE,
     CBC_IV_CHALLENGE,
     CBC_IV_INCREMENT=4,
-    CTR_CHALLENGE
+    CTR_CHALLENGE=undefined,
+    // PUBLIC_KEY=undefined,
+    // PRIVATE_KEY=undefined,    
+    ASYMM_CHALLENGE=undefined,    
 } = process.env
 
 const dev = {
@@ -36,6 +39,9 @@ const dev = {
     CBC_IV_CHALLENGE,
     CBC_IV_INCREMENT: parseInt(CBC_IV_INCREMENT, 10),
     CTR_CHALLENGE,
+    // PUBLIC_KEY,
+    // PRIVATE_KEY,
+    ASYMM_CHALLENGE,
 
     //-----------------------------
     // VIEW TEXT (for GET requests)
@@ -141,6 +147,45 @@ const dev = {
                         a random but low-entropy initialization vector (IV); i.e., the IV 
                         is selected randomly from a small set of values.`
                     }]
+                }, 
+                
+                {
+                    title: 'asymm',
+                    paths: [{
+                        path: '/asymm/rsa/server',
+                        method: 'GET',
+                        params: 'none',
+                        response: '{ key: string (hex) }', 
+                        description: `Fetch the server public RSA key.`
+                    },
+
+                    {
+                        path: '/asymm/rsa/client',
+                        method: 'POST',
+                        params: '{ key: string (hex) }',
+                        response: '{ result: string (utf8) }',
+                        description: `Upload the client RSA key to the server.`                    
+                    },
+
+                    {
+                        path: '/asymm/dh/client',
+                        method: 'POST',
+                        params: '{ key: string (hex), signature: string (hex) }',
+                        response: '{ result: string (utf8) }',
+                        description: `Send a client DH public key to the server. The DH key is
+                        is signed by the client RSA private key. The server verifies the 
+                        signature using the client RSA public key.`
+                    }, 
+                    
+                    {
+                        path: '/asymm/challenge',
+                        method: 'GET',
+                        params: 'none',
+                        response: '{ key: string (hex), signature: string(hex), challenge: {iv: string (hex), ciphertext: string(hex)} }',
+                        description: `Fetch a challenge encrypted in the CTR mode using 
+                        a random initialization vector (IV) and the AES encryption key that is derived from 
+                        the authenticated Diffie-Hellman key exchange. Please note that the AES key is derived using PBKDF2; for details (parameters used to derive the key) please consult the code on the server ("asymm.controller.js" file).`                        
+                    }]
                 }],
             }
         },
@@ -157,11 +202,17 @@ const dev = {
         },
 
         EPLAINTEXT_LIMIT: {
-            title: 'Error',
+            title: 'Formatting error',
             message: 'You exceeded the plaintext size.',
             status: 400
         },
-        
+
+        EBAD_PUBLICKEY: {
+            title: 'Public key error',
+            message: 'Bad public key',
+            status: 400
+        },
+
         ENOTAUTHORIZED: {
             title: 'Authorization Error',
             message: 'You are not authorized for the requested resource.',
