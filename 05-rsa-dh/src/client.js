@@ -7,8 +7,8 @@ const { getRequest, postRequest } = require('./utils');
 const { RSA, diffieHellman, getChallenge: getChallengeConfig } = require('./config');
 
 const clientRSA = {
-    publicKey: fs.readFileSync('public.pem'),
-    privateKey: fs.readFileSync('private.pem')
+    publicKey: fs.readFileSync('keys/public.pem'),
+    privateKey: fs.readFileSync('keys/private.pem')
 }
 
 const diffieHellmanService = crypto.getDiffieHellman('modp15');
