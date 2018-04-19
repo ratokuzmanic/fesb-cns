@@ -39,9 +39,9 @@ digitallySignWithPrivateRSAKey = (elementToSign) => {
     return sign.sign(clientRSA.privateKey, 'hex');
 }
 
-verifySignatureWithPublicRSAKey = (publicKey, signature, content) => {
+verifySignatureWithPublicRSAKey = (publicKey, signature, ...content) => {
     const verify = crypto.createVerify('RSA-SHA256');
-    verify.write(content);
+    verify.write(content.join(''));
     verify.end();
     return verify.verify(Buffer.from(publicKey, 'hex'), signature, 'hex');
 }
@@ -52,7 +52,7 @@ verifySignatureWithPublicRSAKey = (publicKey, signature, content) => {
     await postClientDiffieHellmanPublicKey(clientDiffieHellman.publicKey, digitallySignWithPrivateRSAKey(clientDiffieHellman.publicKey));
 
     const { key, signature, challenge } = await getChallenge();
-    const isSignatureOk = verifySignatureWithPublicRSAKey(serverRSAPublicKey, signature, key + clientDiffieHellman.publicKey.toString('hex'));
+    const isSignatureOk = verifySignatureWithPublicRSAKey(serverRSAPublicKey, signature, key, clientDiffieHellman.publicKey.toString('hex'));
 
     if(isSignatureOk)
     {
