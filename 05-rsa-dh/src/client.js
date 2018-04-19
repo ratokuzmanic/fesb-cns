@@ -70,7 +70,7 @@ getChallenge = () =>
 
 digitallySignWithPrivateRSAKey = (elementToSign) => {
     const sign = crypto.createSign('RSA-SHA256');
-    sign.write(element);
+    sign.write(elementToSign);
     sign.end();
     return sign.sign(clientRSA.privateKey, 'hex');
 }
@@ -78,7 +78,7 @@ digitallySignWithPrivateRSAKey = (elementToSign) => {
 (async () => {
     const { key: serverRSAPublicKey } = await getServerRSAPublicKey();
     const response = await postClientRSAPublicKey(Buffer.from(clientRSA.publicKey).toString('hex'));
-    
+
     const responseDH = await postClientDHPublicKey(clientDiffieHellman.publicKey, digitallySignWithPrivateRSAKey(clientDiffieHellman.publicKey));
 
     const { key, challenge } = await getChallenge();
