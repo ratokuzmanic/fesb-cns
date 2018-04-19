@@ -1,13 +1,20 @@
 const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
-const config = require('./config.js');
+const config = require('./config');
+const { decryptChallenge } = require('./decrypt');
 
-const clientRSAPublic = fs.readFileSync('public.pem');
-const clientRSAPrivate = fs.readFileSync('private.pem');
-const DH = crypto.getDiffieHellman('modp15');
-DH.generateKeys();
-const DH_PuK = DH.getPublicKey('hex');
+const clientRSA = {
+    publicKey: fs.readFileSync('public.pem'),
+    privateKey: fs.readFileSync('private.pem')
+}
+
+const diffieHellmanService = crypto.getDiffieHellman('modp15');
+diffieHellmanService.generateKeys();
+
+const clientDiffieHellman = {
+    publicKey: diffieHellmanService.getPublicKey('hex')
+}
 
 getServerRSAPublicKey = () =>
     new Promise((resolve, reject) => {
@@ -35,14 +42,9 @@ postClientRSAPublicKey = (key) =>
         request.end();
     });
 
-postClientDHPublicKey = () =>
-    new Promise((resolve, reject) => {        
-        const sign = crypto.createSign('RSA-SHA256');
-        sign.write(DH_PuK);
-        sign.end();
-        signature = sign.sign(clientRSAPrivate, 'hex');
-
-        const data = JSON.stringify({ key: DH_PuK, signature: signature });
+postClientDHPublicKey = (key, signature) =>
+    new Promise((resolve, reject) => {    
+        const data = JSON.stringify({ key, signature });
 
         const request = http.request(config.postClientDHPublicKey, response => {
             response.setEncoding('utf8');
@@ -66,31 +68,22 @@ getChallenge = () =>
         request.end();
     });
 
-function decrypt(
-        mode, 
-        key, 
-        ciphertext, 
-        iv=Buffer.alloc(16), 
-        padding=true,
-        inputEncoding='hex',
-        outputEncoding='utf8' 
-    ) {
-        const decipher = crypto.createDecipheriv(mode, key, iv)
-        decipher.setAutoPadding(padding)
-        let plaintext = decipher.update(ciphertext, inputEncoding, outputEncoding)
-        plaintext += decipher.final(outputEncoding)
-    
-        return { plaintext }
-    }
+digitallySignWithPrivateRSAKey = (elementToSign) => {
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.write(element);
+    sign.end();
+    return sign.sign(clientRSA.privateKey, 'hex');
+}
 
 (async () => {
-    const { key: serverPublicKey } = await getServerRSAPublicKey();
-    const response = await postClientRSAPublicKey(Buffer.from(clientRSAPublic).toString('hex'));
-    const responseDH = await postClientDHPublicKey();
+    const { key: serverRSAPublicKey } = await getServerRSAPublicKey();
+    const response = await postClientRSAPublicKey(Buffer.from(clientRSA.publicKey).toString('hex'));
+    
+    const responseDH = await postClientDHPublicKey(clientDiffieHellman.publicKey, digitallySignWithPrivateRSAKey(clientDiffieHellman.publicKey));
+
     const { key, challenge } = await getChallenge();
  
-    const sharedKey = DH.computeSecret(key, 'hex');
-    const derivedKey = crypto.pbkdf2Sync(sharedKey, 'ServerClient', 1, 32, 'sha512');
-    const { plaintext } = decrypt('aes-256-ctr', derivedKey, challenge.ciphertext);
+    const sharedKey = diffieHellmanService.computeSecret(key, 'hex');
+    const plaintext = await decryptChallenge(sharedKey, challenge);
     console.log(plaintext);
 })();

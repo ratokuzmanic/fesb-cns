@@ -30,9 +30,17 @@ const getChallenge = {
     method: 'GET'
 }
 
+const pbkdf2 = {
+    salt: 'ServerClient',
+    iterations: 1,
+    size: 32,
+    hash: 'sha512'
+};
+
 module.exports = {
     getServerRSAPublicKey: getServerRSAPublicKey,
     postClientRSAPublicKey: postClientRSAPublicKey,
     postClientDHPublicKey: postClientDHPublicKey,
-    getChallenge: getChallenge
+    getChallenge: getChallenge,
+    pbkdf2: pbkdf2
 }
