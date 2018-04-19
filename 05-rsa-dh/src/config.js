@@ -18,7 +18,7 @@ const postClientRSAPublicKey = {
     method: 'POST'
 };
 
-const postClientDHPublicKey = {
+const postClientDiffieHellmanPublicKey = {
     ...commonRequest,
     path: '/asymm/dh/client',
     method: 'POST'
@@ -38,9 +38,13 @@ const pbkdf2 = {
 };
 
 module.exports = {
-    getServerRSAPublicKey: getServerRSAPublicKey,
-    postClientRSAPublicKey: postClientRSAPublicKey,
-    postClientDHPublicKey: postClientDHPublicKey,
+    RSA: {
+        getServerPublicKey: getServerRSAPublicKey,
+        postClientPublicKey: postClientRSAPublicKey
+    },
+    diffieHellman: {
+        postClientPublicKey: postClientDiffieHellmanPublicKey
+    },
     getChallenge: getChallenge,
     pbkdf2: pbkdf2
 }

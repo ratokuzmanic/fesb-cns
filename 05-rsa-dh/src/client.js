@@ -1,8 +1,10 @@
 const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
-const config = require('./config');
 const { decryptChallenge } = require('./decrypt');
+const { getRequest, postRequest } = require('./utils');
+const { prettyLogSuccess } = require('./logger');
+const { RSA, diffieHellman, getChallenge: getChallengeConfig } = require('./config');
 
 const clientRSA = {
     publicKey: fs.readFileSync('public.pem'),
@@ -16,57 +18,19 @@ const clientDiffieHellman = {
     publicKey: diffieHellmanService.getPublicKey('hex')
 }
 
-getServerRSAPublicKey = () =>
-    new Promise((resolve, reject) => {
-        const request = http.request(config.getServerRSAPublicKey, response => {
-            let data = '';
-            response.on('data', chunk => data += chunk);    
-            response.on('end', () => resolve(JSON.parse(data)));
-        }); 
-        request.end();
-    });
+getServerRSAPublicKey = () => getRequest(RSA.getServerPublicKey);
 
-postClientRSAPublicKey = (key) =>
-    new Promise((resolve, reject) => {
-        const data = JSON.stringify({ key });
+postClientRSAPublicKey = (key) => {
+    const data = JSON.stringify({ key });
+    return postRequest(data, RSA.postClientPublicKey);
+}
 
-        const request = http.request(config.postClientRSAPublicKey, response => {
-            response.setEncoding('utf8');
+postClientDiffieHellmanPublicKey = (key, signature) => {
+    const data = JSON.stringify({ key, signature });
+    return postRequest(data, diffieHellman.postClientPublicKey);
+}
 
-            response.on('data', data => resolve(JSON.parse(data)));
-            
-            response.on('error', error => reject());
-        });
-
-        request.write(data);
-        request.end();
-    });
-
-postClientDHPublicKey = (key, signature) =>
-    new Promise((resolve, reject) => {    
-        const data = JSON.stringify({ key, signature });
-
-        const request = http.request(config.postClientDHPublicKey, response => {
-            response.setEncoding('utf8');
-
-            response.on('data', data => resolve(JSON.parse(data)));
-            
-            response.on('error', error => reject());
-        });
-
-        request.write(data);
-        request.end();
-    });
-
-getChallenge = () =>
-    new Promise((resolve, reject) => {
-        const request = http.request(config.getChallenge, response => {
-            let data = '';
-            response.on('data', chunk => data += chunk);    
-            response.on('end', () => resolve(JSON.parse(data)));
-        }); 
-        request.end();
-    });
+getChallenge = () => getRequest(getChallengeConfig);
 
 digitallySignWithPrivateRSAKey = (elementToSign) => {
     const sign = crypto.createSign('RSA-SHA256');
@@ -77,13 +41,13 @@ digitallySignWithPrivateRSAKey = (elementToSign) => {
 
 (async () => {
     const { key: serverRSAPublicKey } = await getServerRSAPublicKey();
-    const response = await postClientRSAPublicKey(Buffer.from(clientRSA.publicKey).toString('hex'));
-
-    const responseDH = await postClientDHPublicKey(clientDiffieHellman.publicKey, digitallySignWithPrivateRSAKey(clientDiffieHellman.publicKey));
+    await postClientRSAPublicKey(clientRSA.publicKey.toString('hex'));
+    await postClientDiffieHellmanPublicKey(clientDiffieHellman.publicKey, digitallySignWithPrivateRSAKey(clientDiffieHellman.publicKey));
 
     const { key, challenge } = await getChallenge();
  
     const sharedKey = diffieHellmanService.computeSecret(key, 'hex');
     const plaintext = await decryptChallenge(sharedKey, challenge);
-    console.log(plaintext);
+
+    prettyLogSuccess('Joke decrypted', plaintext);
 })();
