@@ -62,6 +62,6 @@ verifySignatureWithPublicRSAKey = (publicKey, signature, ...content) => {
     }
     else
     {
-        prettyLogError('Signature invalid', 'Signature of Diffie Hellman public keys is invalid');
+        prettyLogError('Signature invalid', 'Challenge signature is invalid');
     }
 })();
