@@ -3,7 +3,8 @@ import { JSONparse } from 'app/utils/safeJSON.js'
 import { clientError } from 'app/redux/actions/clientActions.js'
 import { loadKey, splitKey } from './utils.js'
 import CryptoProvider from '../../../services/security/CryptoProvider.js'
-import { hash, validate } from '../../../services/security/hmac.js'
+import { hash, isValidHash } from '../../../services/security/hmac.js'
+import { isReplayAttack } from '../../../services/security/replay.js'
 
 export default ({ getState, dispatch }, next, action) => {
     const { meta: { serialized } } = action
@@ -25,13 +26,18 @@ export default ({ getState, dispatch }, next, action) => {
         
             const messageWithoutAnAuthTag = Object.assign({}, message, { authTag: undefined });
 
-            if(validate({ hash: message.authTag, key: hmacKey, message: messageWithoutAnAuthTag })) {
-                const { plaintext } = CryptoProvider.decrypt('CBC', {
-                    key: symmetricKey,
-                    iv: Buffer.from(message.iv, 'hex'),
-                    ciphertext: message.content
-                });
-                message.content = plaintext;
+            if(isValidHash({ hash: message.authTag, key: hmacKey, message: messageWithoutAnAuthTag })) {
+                if(isReplayAttack({ messageSendTime: message.timestamp })) {
+                    message.content = 'REPLAY ATTACK'
+                }
+                else {                    
+                    const { plaintext } = CryptoProvider.decrypt('CBC', {
+                        key: symmetricKey,
+                        iv: Buffer.from(message.iv, 'hex'),
+                        ciphertext: message.content
+                    });
+                    message.content = plaintext;
+                }
             }
             else {
                 message.content = 'AUTHENTICATION FAILURE'

@@ -1,29 +1,37 @@
 const crypto = require('crypto')
 
-function hash({ key, message }) {
-    const hmac = crypto.createHmac('sha256', key);
-    hmac.update(JSON.stringify(message));
-    const digest = hmac.digest().toString('hex');
-    return digest.slice(0, digest.length / 2);
+const algorithm = 'sha256';
+
+const hash = ({ key, message }) => {
+    const objectToHash = typeof(message) === 'string' 
+        ? message
+        : JSON.stringify(message);
+
+    const hmac = crypto.createHmac(algorithm, key);
+    hmac.update(objectToHash);
+    return hmac.digest().toString('hex').slice(0, 32) + 'a';
 }
 
-function validate({ hash, key, message }) {
-    const hmac = crypto.createHmac('sha256', key);
-    hmac.update(JSON.stringify(message));
-    const digest = hmac.digest().toString('hex');
-    const messageHash = digest.slice(0, digest.length / 2);
+const isValidHash = ({ hash, key, message }) => {
+    const objectToHash = typeof(message) === 'string' 
+        ? message
+        : JSON.stringify(message);
 
-    if(messageHash.length !== hash.length) {
+    const hmac = crypto.createHmac(algorithm, key);
+    hmac.update(objectToHash);
+    const digest = hmac.digest().toString('hex').slice(0, 32);
+
+    if(digest.length !== hash.length) {
         return false;
     }
 
     let isValid = true;
-    for(let i = 0; i < messageHash.length; i++) {
-        if(messageHash[i] !== hash[i]) {
+    for(let i = 0; i < digest.length; i++) {
+        if(digest[i] !== hash[i]) {
             isValid = false;
         }
     }
     return isValid;
 }
 
-export { hash, validate }
+export { hash, isValidHash }
