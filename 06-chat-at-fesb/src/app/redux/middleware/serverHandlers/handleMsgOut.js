@@ -59,7 +59,15 @@ export default ({ getState, dispatch }, next, action) => {
         Object.assign(message, { content: action.payload });
     }
 
+    const privateDisplayMessage = {
+        type: MsgType.BROADCAST,
+        id,
+        nickname,
+        timestamp: Date.now(),
+        content: action.payload
+    }
+
     serverAPI.send(message).then(
-        dispatch(msgSent(message))
+        dispatch(msgSent(privateDisplayMessage))
     )
 }

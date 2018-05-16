@@ -3,7 +3,7 @@ const crypto = require('crypto')
 import { serverMsg } from 'app/redux/actions/serverActions.js'
 import { JSONparse } from 'app/utils/safeJSON.js'
 import { clientError } from 'app/redux/actions/clientActions.js'
-import { loadKey } from './utils.js'
+import { loadKey, splitKey } from './utils.js'
 import CryptoProvider from '../../../services/security/CryptoProvider.js'
 
 export default ({ getState, dispatch }, next, action) => {
@@ -32,11 +32,7 @@ export default ({ getState, dispatch }, next, action) => {
         // So, we decrypt the messages before reading them.  
         //===================================================
         if (key) {
-            const decryptionKey = Buffer.alloc(32);
-            const hmacKey = Buffer.alloc(32);
-            key.copy(decryptionKey, 0, 0, key.byteLength / 2);
-            key.copy(hmacKey, 0, key.byteLength / 2, 64);
-
+            const { symmetricKey, hmacKey } = splitKey(key);
             message = {...message};
 
             const messageWithoutAuthTag = Object.keys(message)
@@ -52,14 +48,14 @@ export default ({ getState, dispatch }, next, action) => {
 
             if(authTag === message.authTag) {
                 const { plaintext } = CryptoProvider.decrypt('CBC', {
-                    key: decryptionKey,
+                    key: symmetricKey,
                     iv: Buffer.from(message.iv, 'hex'),
                     ciphertext: message.content
                 });
                 message.content = plaintext;
             }
             else {
-                message.content = `AUTHENTICATION FAILURE`
+                message.content = 'AUTHENTICATION FAILURE: Invalid HMAC value'
             }            
         }
     }
