@@ -3,6 +3,7 @@ import {
     KEY_GENERATED,
     KEY_DELETE
 } from './actionTypes.js'
+import pbkdf2 from '../../services/security/pbkdf2.js'
 
 
 export const generateKey = payload => dispatch => {
@@ -11,14 +12,22 @@ export const generateKey = payload => dispatch => {
         payload: { id: payload.id }
     })
 
-    // Simulating a call to "slow" PBKDF2
-    setTimeout(() => dispatch({
-        type: KEY_GENERATED,
-        payload: {
-            id: payload.id,
-            key: payload.secret
-        }
-    }), 1000)
+    pbkdf2({ secret: payload.secret, salt: payload.id })
+        .then(key => dispatch({
+            type: KEY_GENERATED,
+            payload: {
+                id: payload.id,
+                key: key
+            }
+        }))
+        .catch(error => dispatch({
+            type: KEY_GENERATED,
+            payload: {
+                id: payload.id,
+                error: error
+            },
+            error: true
+        }))
 
     //=================================================== 
     // Replace the above with true PBKDF2 function. 
