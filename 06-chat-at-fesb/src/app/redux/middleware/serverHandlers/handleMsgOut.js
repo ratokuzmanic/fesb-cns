@@ -37,16 +37,27 @@ export default ({ getState, dispatch }, next, action) => {
     }
 
     if(key) {
+        const encryptionKey = Buffer.alloc(32);
+        const hmacKey = Buffer.alloc(32);
+        key.copy(encryptionKey, 0, 0, key.byteLength / 2);
+        key.copy(hmacKey, 0, key.byteLength / 2, 64);
+
         const { ciphertext: content, iv } = CryptoProvider.encrypt('CBC', {
-            key,
+            key: encryptionKey,
             iv: randomBytes(16),
             plaintext: action.payload
         })
-        Object.assign(message, { content, iv });         
+        Object.assign(message, { content, iv });
+        
+        const hmac = crypto.createHmac('sha256', hmacKey);
+        hmac.update(JSON.stringify(message));
+        const digest = hmac.digest().toString('hex');
+        const authTag = digest.slice(0, digest.length / 2);
+        Object.assign(message, { authTag });
     }
     else {
         Object.assign(message, { content: action.payload });
-    }  
+    }
 
     serverAPI.send(message).then(
         dispatch(msgSent(message))

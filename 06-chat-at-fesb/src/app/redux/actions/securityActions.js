@@ -12,7 +12,7 @@ export const generateKey = payload => dispatch => {
         payload: { id: payload.id }
     })
 
-    pbkdf2({ secret: payload.secret, salt: payload.id })
+    pbkdf2({ secret: payload.secret, salt: payload.id, size: 64 })
         .then(key => dispatch({
             type: KEY_GENERATED,
             payload: {
