@@ -1,10 +1,9 @@
-const crypto = require('crypto')
-
 import { serverMsg } from 'app/redux/actions/serverActions.js'
 import { JSONparse } from 'app/utils/safeJSON.js'
 import { clientError } from 'app/redux/actions/clientActions.js'
 import { loadKey, splitKey } from './utils.js'
 import CryptoProvider from '../../../services/security/CryptoProvider.js'
+import { hash, validate } from '../../../services/security/hmac.js'
 
 export default ({ getState, dispatch }, next, action) => {
     const { meta: { serialized } } = action
@@ -18,35 +17,15 @@ export default ({ getState, dispatch }, next, action) => {
 
     if (message.id) {
         const { credentials } = getState()
-
-        //=================================================== 
-        // Try to load an encryption key for this client id;
-        // please note that this is a remote client.
-        //===================================================         
+    
         const key = loadKey(message.id, credentials)
 
-        //=================================================== 
-        // If the encryption key is successfully loaded,
-        // it is implied that all incoming messages from this 
-        // remote client will be encrypted with that key. 
-        // So, we decrypt the messages before reading them.  
-        //===================================================
         if (key) {
             const { symmetricKey, hmacKey } = splitKey(key);
-            message = {...message};
+        
+            const messageWithoutAnAuthTag = Object.assign({}, message, { authTag: undefined });
 
-            const messageWithoutAuthTag = Object.keys(message)
-            .filter(key => key !== 'authTag')
-            .reduce((obj, key) => {
-                obj[key] = message[key];
-                return obj;
-            }, {});
-            const hmac = crypto.createHmac('sha256', hmacKey);
-            hmac.update(JSON.stringify(messageWithoutAuthTag));
-            const digest = hmac.digest().toString('hex');
-            const authTag = digest.slice(0, digest.length / 2);
-
-            if(authTag === message.authTag) {
+            if(validate({ hash: message.authTag, key: hmacKey, message: messageWithoutAnAuthTag })) {
                 const { plaintext } = CryptoProvider.decrypt('CBC', {
                     key: symmetricKey,
                     iv: Buffer.from(message.iv, 'hex'),
@@ -55,7 +34,7 @@ export default ({ getState, dispatch }, next, action) => {
                 message.content = plaintext;
             }
             else {
-                message.content = 'AUTHENTICATION FAILURE: Invalid HMAC value'
+                message.content = 'AUTHENTICATION FAILURE'
             }            
         }
     }
