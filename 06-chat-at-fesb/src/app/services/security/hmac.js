@@ -9,7 +9,7 @@ const hash = ({ key, message }) => {
 
     const hmac = crypto.createHmac(algorithm, key);
     hmac.update(objectToHash);
-    return hmac.digest().toString('hex').slice(0, 32) + 'a';
+    return hmac.digest().toString('hex').slice(0, 32);
 }
 
 const isValidHash = ({ hash, key, message }) => {
