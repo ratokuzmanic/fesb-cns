@@ -3,10 +3,9 @@ const crypto = require('crypto')
 import { Server, Constants } from 'config'
 import serverAPI from 'app/services/server-api/ServerAPI.js'
 import { msgSent } from 'app/redux/actions/clientActions.js'
-import { loadKey, splitKey } from './utils.js'
+import { loadKey } from './utils.js'
 import CryptoProvider from '../../../services/security/CryptoProvider.js'
 import { randomBytes } from 'crypto'
-import { hash } from '../../../services/security/hmac.js'
 
 const { MsgType } = Constants
 
@@ -29,17 +28,12 @@ export default ({ getState, dispatch }, next, action) => {
     }
 
     if(key) {
-        const { symmetricKey, hmacKey } = splitKey(key);
-
-        const { ciphertext, iv } = CryptoProvider.encrypt('CBC', {
-            key: symmetricKey,
-            iv: randomBytes(16),
+        const { ciphertext, iv, tag } = CryptoProvider.encrypt('GCM', {
+            key,
+            iv: randomBytes(12),
             plaintext: action.payload
-        })
-        Object.assign(message, { content: ciphertext, iv });        
-        
-        const authTag = hash({ key: hmacKey, message });
-        Object.assign(message, { authTag });
+        });
+        Object.assign(message, { content: ciphertext, iv, tag });
     }
     else {
         Object.assign(message, { content: action.payload });
