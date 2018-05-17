@@ -4,15 +4,6 @@ function loadKey(id, state) {
     return key
 }
 
-function splitKey(key) {
-    const symmetricKey = Buffer.alloc(32);
-    const hmacKey = Buffer.alloc(32);
-    key.copy(symmetricKey, 0, 0, key.byteLength / 2);
-    key.copy(hmacKey, 0, key.byteLength / 2, 64);
-
-    return { symmetricKey, hmacKey };
-}
-
 // function loadCredentials(id, state) {
 //     if (!(id in state)) return {
 //         key: undefined,
@@ -25,4 +16,4 @@ function splitKey(key) {
 //     }
 // }
 
-export { loadKey, splitKey }
+export { loadKey }
