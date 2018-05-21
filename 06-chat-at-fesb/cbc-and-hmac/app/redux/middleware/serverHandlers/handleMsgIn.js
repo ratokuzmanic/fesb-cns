@@ -26,11 +26,11 @@ export default ({ getState, dispatch }, next, action) => {
         
             const messageWithoutAnAuthTag = Object.assign({}, message, { authTag: undefined });
 
-            if(isValidHash({ hash: message.authTag, key: hmacKey, message: messageWithoutAnAuthTag })) {
-                if(isReplayAttack({ messageSendTime: message.timestamp })) {
-                    message.content = 'REPLAY ATTACK'
-                }
-                else {                    
+            if(isReplayAttack({ messageSendTime: message.timestamp })) {
+                message.content = 'REPLAY ATTACK'
+            }
+            else {
+                if(isValidHash({ hash: message.authTag, key: hmacKey, message: messageWithoutAnAuthTag })) {                  
                     const { plaintext } = CryptoProvider.decrypt('CBC', {
                         key: symmetricKey,
                         iv: Buffer.from(message.iv, 'hex'),
@@ -38,10 +38,10 @@ export default ({ getState, dispatch }, next, action) => {
                     });
                     message.content = plaintext;
                 }
-            }
-            else {
-                message.content = 'AUTHENTICATION FAILURE'
-            }            
+                else {
+                    message.content = 'AUTHENTICATION FAILURE'
+                } 
+            }                       
         }
     }
 
