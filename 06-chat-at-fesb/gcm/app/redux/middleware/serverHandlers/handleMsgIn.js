@@ -21,7 +21,7 @@ export default ({ getState, dispatch }, next, action) => {
         const key = loadKey(message.id, credentials)
 
         if (key) {
-            if(isReplayAttack({ messageSendTime: message.timestamp })) {
+            if(isReplayAttack(message.timestamp)) {
                 message.content = 'REPLAY ATTACK'
             }
             else {
