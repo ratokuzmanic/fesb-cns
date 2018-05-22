@@ -26,7 +26,7 @@ export default ({ getState, dispatch }, next, action) => {
         
             const messageWithoutAnAuthTag = Object.assign({}, message, { authTag: undefined });
 
-            if(isReplayAttack({ messageSendTime: message.timestamp })) {
+            if(isReplayAttack(message.timestamp)) {
                 message.content = 'REPLAY ATTACK'
             }
             else {
