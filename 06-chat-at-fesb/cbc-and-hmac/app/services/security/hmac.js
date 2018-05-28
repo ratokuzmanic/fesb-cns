@@ -13,13 +13,7 @@ const hash = ({ key, message }) => {
 }
 
 const isValidHash = ({ hash, key, message }) => {
-    const objectToHash = typeof(message) === 'string' 
-        ? message
-        : JSON.stringify(message);
-
-    const hmac = crypto.createHmac(algorithm, key);
-    hmac.update(objectToHash);
-    const digest = hmac.digest().toString('hex').slice(0, 32);
+    const digest = hash({ key, message });
 
     if(digest.length !== hash.length) {
         return false;
